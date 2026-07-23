@@ -1,0 +1,8 @@
+.zed/
+.vscode/
+.idea/
+
+.codex
+
+.cargo
+/target
