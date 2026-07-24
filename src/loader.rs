@@ -2,6 +2,7 @@
 #![allow(unsafe_op_in_unsafe_fn)]
 
 use std::ffi::{CStr, OsStr, c_char, c_void};
+use std::mem::MaybeUninit;
 use std::path::PathBuf;
 
 use libloading::{Library, Symbol};
@@ -11,7 +12,7 @@ use crate::com::{
     ISlangCastable_Impl, ISlangSharedLibrary, ISlangSharedLibrary_Impl, ISlangSharedLibraryLoader,
     ISlangSharedLibraryLoader_Impl,
 };
-use crate::sys::root::SlangUUID;
+use crate::sys::SlangUUID;
 
 pub struct LoadedLibrary<'a> {
     pub(crate) create_global_session: Symbol<'a, FnCreateGlobalSession>,
@@ -34,19 +35,24 @@ type FnCreateGlobalSession = unsafe extern "C" fn(i64, *mut *mut c_void) -> HRES
 
 #[implement(ISlangSharedLibraryLoader)]
 pub struct CustomSharedLibraryLoader {
-    pub base_dir: PathBuf,
+    pub dxil_path: PathBuf,
+    pub dxcompiler_path: PathBuf,
 }
 
 impl ISlangSharedLibraryLoader_Impl for CustomSharedLibraryLoader_Impl {
     unsafe fn loadSharedLibrary(
         &self,
         path: *const c_char,
-        shared_library_out: *mut ISlangSharedLibrary,
+        shared_library_out: *mut MaybeUninit<ISlangSharedLibrary>,
     ) -> HRESULT {
         let path = CStr::from_ptr(path);
-        let path = OsStr::from_encoded_bytes_unchecked(path.to_bytes());
+        log::debug!("library requested: path={:?}", path.to_str());
 
-        log::debug!("library requested: path={}", path.display());
+        let path = match path.to_bytes() {
+            b"dxil" => self.dxil_path.as_os_str(),
+            b"dxcompiler" => self.dxcompiler_path.as_os_str(),
+            _ => OsStr::from_encoded_bytes_unchecked(path.to_bytes()),
+        };
 
         let library = match Library::new(path) {
             Ok(lib) => lib,
@@ -59,7 +65,7 @@ impl ISlangSharedLibraryLoader_Impl for CustomSharedLibraryLoader_Impl {
         debug_assert!(!shared_library_out.is_null());
 
         let library: ISlangSharedLibrary = CustomSharedLibrary { library }.into();
-        std::ptr::write(shared_library_out, library);
+        *shared_library_out = MaybeUninit::new(library);
 
         HRESULT(0)
     }

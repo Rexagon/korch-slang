@@ -9,10 +9,11 @@ fn main() {
     let bindings = bindgen::Builder::default()
         .header("src/slang.h")
         .allowlist_type("Slang.*")
+        .allowlist_function("sp*")
+        .opaque_type("ISlang.*")
         .clang_args(["-x", "c++"])
         .clang_arg("-std=c++20")
         .clang_arg(format!("--target={target}"))
-        .enable_cxx_namespaces()
         .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()))
         .generate()
         .expect("Unable to generate bindings");

@@ -7,7 +7,7 @@ use windows_core::Interface;
 
 use crate::LoadedLibrary;
 use crate::com::{IGlobalSession, ISlangSharedLibraryLoader};
-use crate::sys::root::{
+use crate::sys::{
     SlangCompileTarget_SLANG_DXIL, SlangCompileTargetIntegral,
     SlangPassThrough_SLANG_PASS_THROUGH_DXC, SlangPassThroughIntegral,
 };
