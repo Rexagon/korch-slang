@@ -87,15 +87,12 @@ impl AsRef<com::IComponentType> for BoxedComponentTypeRef<'_> {
 
 // === Raw Stuff ===
 
-pub(crate) trait IComponentTypeExt {
-    fn get_raw_layout(&self, ctx: &SlangContext) -> Result<NonNull<sys::SlangProgramLayout>>;
-}
-
-impl<T: std::ops::Deref<Target = com::IComponentType>> IComponentTypeExt for T {
-    fn get_raw_layout(&self, ctx: &SlangContext) -> Result<NonNull<sys::SlangProgramLayout>> {
-        let mut diagnostics = None;
-        let layout = unsafe { self.getLayout(0, &mut diagnostics) };
-        ctx.log_diagnostics(diagnostics);
-        NonNull::new(layout).context("failed to get layout")
-    }
+fn get_raw_layout(
+    component_type: &com::IComponentType,
+    ctx: &SlangContext,
+) -> Result<NonNull<sys::SlangProgramLayout>> {
+    let mut diagnostics = None;
+    let layout = unsafe { component_type.getLayout(0, &mut diagnostics) };
+    ctx.log_diagnostics(diagnostics);
+    NonNull::new(layout).context("failed to get layout")
 }

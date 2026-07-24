@@ -1,5 +1,6 @@
 use anyhow::{Context, Result};
 
+use super::get_raw_layout;
 use crate::{AsBoxedComponentType, BoxedComponentTypeRef, SlangContext, com};
 
 #[derive(Clone)]
@@ -20,6 +21,15 @@ impl LinkedModule {
             "invalid entry point index"
         );
         anyhow::ensure!(target_index <= i64::MAX as usize, "invalid target index");
+
+        let layout = get_raw_layout(&self.inner, &self.ctx)?.as_ptr();
+        let vtable = self.ctx.vtable.as_ref();
+        let entry_point_count = unsafe { (vtable.reflection_get_entry_point_count)(layout) };
+        anyhow::ensure!(
+            (entry_point_index as u64) < entry_point_count,
+            "entry point index is out of range (component type has \
+            {entry_point_count} entry points)",
+        );
 
         let mut diagnostics = None;
         let mut code = None;

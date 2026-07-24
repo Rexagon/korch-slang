@@ -65,10 +65,14 @@ fn compile_shader(config: Config) -> Result<()> {
         println!("stage: {:?}", entry_point.get_stage()?);
 
         let linked = session
-            .create_composite_component([module.as_boxed(), entry_point.as_boxed()])?
-            .link()?;
+            .combine_composite_types([module.as_boxed(), entry_point.as_boxed()])
+            .context("failed to combine component types")?
+            .link()
+            .context("failed to link component types")?;
 
-        let compiled = linked.get_entry_point_code(0, 0)?;
+        let compiled = linked
+            .get_entry_point_code(0, 0)
+            .context("failed to compile entry code")?;
         println!("compiled {} bytes", compiled.len());
     }
 
