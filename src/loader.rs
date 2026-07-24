@@ -2,34 +2,57 @@
 #![allow(unsafe_op_in_unsafe_fn)]
 
 use std::ffi::{CStr, OsStr, c_char, c_void};
-use std::mem::MaybeUninit;
 use std::path::PathBuf;
 
 use libloading::{Library, Symbol};
-use windows_core::{HRESULT, implement};
+use windows_core::{HRESULT, OutRef, implement};
 
 use crate::com::{
     ISlangCastable_Impl, ISlangSharedLibrary, ISlangSharedLibrary_Impl, ISlangSharedLibraryLoader,
     ISlangSharedLibraryLoader_Impl,
 };
-use crate::sys::SlangUUID;
+use crate::sys::{
+    SlangProgramLayout, SlangReflectionEntryPoint, SlangStage, SlangUInt, SlangUUID,
+    slang_FunctionReflection,
+};
 
 pub struct LoadedLibrary<'a> {
     pub(crate) create_global_session: Symbol<'a, FnCreateGlobalSession>,
+
+    pub(crate) reflection_get_entry_point_count: Symbol<'a, FnReflectionGetEntryPointCount>,
+    pub(crate) reflection_get_entry_point_by_index: Symbol<'a, FnReflectionGetEntryPointByIndex>,
+
+    pub(crate) reflection_fn_get_name: Symbol<'a, FnReflectionFnGetName>,
+
+    pub(crate) reflection_entry_point_get_name: Symbol<'a, FnReflectionEntryPointGetName>,
+    pub(crate) reflection_entry_point_get_stage: Symbol<'a, FnReflectionEntryPointGetStage>,
 }
 
 impl<'a> LoadedLibrary<'a> {
     pub fn new(library: &'a Library) -> Result<Self, libloading::Error> {
         unsafe {
             Ok(Self {
-                create_global_session: library
-                    .get::<FnCreateGlobalSession>("slang_createGlobalSession")?,
+                create_global_session: library.get("slang_createGlobalSession")?,
+                reflection_get_entry_point_count: library.get("spReflection_getEntryPointCount")?,
+                reflection_get_entry_point_by_index: library
+                    .get("spReflection_getEntryPointByIndex")?,
+                reflection_fn_get_name: library.get("spReflectionFunction_GetName")?,
+                reflection_entry_point_get_name: library.get("spReflectionEntryPoint_getName")?,
+                reflection_entry_point_get_stage: library.get("spReflectionEntryPoint_getStage")?,
             })
         }
     }
 }
 
 type FnCreateGlobalSession = unsafe extern "C" fn(i64, *mut *mut c_void) -> HRESULT;
+type FnReflectionGetEntryPointCount = unsafe extern "C" fn(*mut SlangProgramLayout) -> SlangUInt;
+type FnReflectionGetEntryPointByIndex =
+    unsafe extern "C" fn(*mut SlangProgramLayout, SlangUInt) -> *mut SlangReflectionEntryPoint;
+type FnReflectionFnGetName = unsafe extern "C" fn(*mut slang_FunctionReflection) -> *const c_char;
+type FnReflectionEntryPointGetName =
+    unsafe extern "C" fn(*mut SlangReflectionEntryPoint) -> *const c_char;
+type FnReflectionEntryPointGetStage =
+    unsafe extern "C" fn(*mut SlangReflectionEntryPoint) -> SlangStage;
 
 // === Custom Shared Library Loader ===
 
@@ -43,7 +66,7 @@ impl ISlangSharedLibraryLoader_Impl for CustomSharedLibraryLoader_Impl {
     unsafe fn loadSharedLibrary(
         &self,
         path: *const c_char,
-        shared_library_out: *mut MaybeUninit<ISlangSharedLibrary>,
+        shared_library_out: OutRef<ISlangSharedLibrary>,
     ) -> HRESULT {
         let path = CStr::from_ptr(path);
         log::debug!("library requested: path={:?}", path.to_str());
@@ -62,12 +85,11 @@ impl ISlangSharedLibraryLoader_Impl for CustomSharedLibraryLoader_Impl {
             }
         };
 
-        debug_assert!(!shared_library_out.is_null());
-
         let library: ISlangSharedLibrary = CustomSharedLibrary { library }.into();
-        *shared_library_out = MaybeUninit::new(library);
-
-        HRESULT(0)
+        match shared_library_out.write(Some(library)) {
+            Ok(()) => HRESULT(0),
+            Err(e) => e.into(),
+        }
     }
 }
 
