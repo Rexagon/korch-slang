@@ -1,12 +1,19 @@
-pub use crate::loader::{CustomSharedLibrary, CustomSharedLibraryLoader, LoadedLibrary};
-pub use crate::session::{
-    CompileTarget, EntryPoint, EntryPointsIter, GlobalSession, MatrixLayoutMode, Module,
-    PassThrough, ProfileId, Session, SessionDescriptor, SourceLanguage, Stage, TargetDescriptor,
+pub use crate::component_type::{
+    AsBoxedComponentType, BoxedComponentType, BoxedComponentTypeRef, EntryPoint, EntryPointsIter,
+    LinkedModule, Module,
 };
-pub use crate::util::Blob;
+pub use crate::context::SlangContext;
+pub use crate::env::CompilerPaths;
+pub use crate::session::{GlobalSession, Session, SessionDescriptor, TargetDescriptor};
+pub use crate::types::{
+    CompileTarget, MatrixLayoutMode, PassThrough, ProfileId, SourceLanguage, Stage,
+};
 
-pub mod com;
-mod loader;
+mod com;
+mod component_type;
+mod context;
+mod env;
 mod session;
 mod sys;
+mod types;
 mod util;

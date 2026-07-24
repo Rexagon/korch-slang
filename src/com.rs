@@ -2,7 +2,7 @@
 
 use std::ffi::{c_char, c_void};
 
-use windows_core::{HRESULT, IUnknown, IUnknown_Vtbl, OutRef, Ref, interface};
+use windows_core::{IUnknown, IUnknown_Vtbl, OutRef, Ref, Result, interface};
 
 use crate::sys::{
     SlangBool, SlangCompileRequest, SlangCompileTarget, SlangInt, SlangInt32, SlangLayoutRules,
@@ -19,7 +19,7 @@ pub unsafe trait IGlobalSession: IUnknown {
         &mut self,
         desc: *const slang_SessionDesc,
         out_session: OutRef<ISession>,
-    ) -> HRESULT;
+    ) -> Result<()>;
     pub fn findProfile(&mut self, name: *const c_char) -> SlangProfileID;
 
     fn stub_setDownstreamCompilerPath(&mut self);
@@ -36,15 +36,15 @@ pub unsafe trait IGlobalSession: IUnknown {
     pub fn createCompileRequest(
         &mut self,
         out_compile_request: *mut *mut SlangCompileRequest,
-    ) -> HRESULT;
+    ) -> Result<()>;
 
     fn stub_addBuiltins(&mut self);
 
     pub fn setSharedLibraryLoader(&mut self, loader: Ref<ISlangSharedLibraryLoader>);
     pub fn getSharedLibraryLoader(&mut self) -> *mut c_void;
 
-    pub fn checkCompileTargetSupport(&mut self, target: SlangCompileTarget) -> HRESULT;
-    pub fn checkPassThroughSupport(&mut self, pass_through: SlangPassThrough) -> HRESULT;
+    pub fn checkCompileTargetSupport(&mut self, target: SlangCompileTarget) -> Result<()>;
+    pub fn checkPassThroughSupport(&mut self, pass_through: SlangPassThrough) -> Result<()>;
 
     fn stub_compileCoreModule(&mut self);
     fn stub_loadCoreModule(&mut self);
@@ -67,7 +67,7 @@ pub unsafe trait IGlobalSession: IUnknown {
         pass_through: SlangPassThroughIntegral,
         out_major: *mut i32,
         out_minor: *mut i32,
-    ) -> HRESULT;
+    ) -> Result<()>;
 }
 
 #[interface("67618701-d116-468f-ab3b-474bedce0e3d")]
@@ -94,7 +94,7 @@ pub unsafe trait ISession: IUnknown {
         component_type_count: SlangInt,
         out_composite_component_type: OutRef<IComponentType>,
         out_diagnostics: OutRef<ISlangBlob>,
-    ) -> HRESULT;
+    ) -> Result<()>;
     pub fn specializeType(
         &mut self,
         type_reflection: *mut slang_TypeReflection,
@@ -129,7 +129,7 @@ pub unsafe trait ISession: IUnknown {
         out_conformance: OutRef<ITypeConformance>,
         conformance_id_override: SlangInt,
         out_diagnostics: OutRef<ISlangBlob>,
-    ) -> HRESULT;
+    ) -> Result<()>;
 
     /// Returns IModule.
     pub fn loadModuleFromIRBlob(
@@ -160,7 +160,7 @@ pub unsafe trait ISession: IUnknown {
         &mut self,
         decl: *mut slang_DeclReflection,
         out_location: *mut slang_SourceLocation,
-    ) -> HRESULT;
+    ) -> Result<()>;
 }
 
 #[interface("0c720e64-8722-4d31-8990-638a98b1c279")]
@@ -169,15 +169,15 @@ pub unsafe trait IModule: IComponentType {
         &mut self,
         name: *const c_char,
         out_entry_point: OutRef<IEntryPoint>,
-    ) -> HRESULT;
+    ) -> Result<()>;
     pub fn getDefinedEntryPointCount(&mut self) -> SlangInt32;
     pub fn getDefinedEntryPoint(
         &mut self,
         index: SlangInt32,
         out_entry_point: OutRef<IEntryPoint>,
-    ) -> HRESULT;
-    pub fn serialize(&mut self, out_serialized_blob: OutRef<ISlangBlob>) -> HRESULT;
-    pub fn writeToFile(&mut self, filename: *const c_char) -> HRESULT;
+    ) -> Result<()>;
+    pub fn serialize(&mut self, out_serialized_blob: OutRef<ISlangBlob>) -> Result<()>;
+    pub fn writeToFile(&mut self, filename: *const c_char) -> Result<()>;
     pub fn getName(&mut self) -> *const c_char;
     pub fn getFilePath(&mut self) -> *const c_char;
     pub fn getUniqueIdentity(&mut self) -> *const c_char;
@@ -187,11 +187,11 @@ pub unsafe trait IModule: IComponentType {
         stage: SlangStage,
         out_entry_point: OutRef<IEntryPoint>,
         out_diagnostics: OutRef<ISlangBlob>,
-    ) -> HRESULT;
+    ) -> Result<()>;
     pub fn getDependencyFileCount(&mut self) -> SlangInt32;
     pub fn getDependencyFilePath(&mut self, index: SlangInt32) -> *const c_char;
     pub fn getModuleReflection(&mut self) -> *mut slang_DeclReflection;
-    pub fn disassemble(&mut self, out_disassembled_blob: OutRef<ISlangBlob>) -> HRESULT;
+    pub fn disassemble(&mut self, out_disassembled_blob: OutRef<ISlangBlob>) -> Result<()>;
 }
 
 #[interface("73eb3147-e544-41b5-b8f0-a244df21940b")]
@@ -218,7 +218,7 @@ pub unsafe trait IComponentType: IUnknown {
         target_index: SlangInt,
         out_code: OutRef<ISlangBlob>,
         out_diagnostics: OutRef<ISlangBlob>,
-    ) -> HRESULT;
+    ) -> Result<()>;
 
     fn stub_getResultAsFileSystem(&mut self);
 
@@ -234,12 +234,12 @@ pub unsafe trait IComponentType: IUnknown {
         specialization_arg_count: SlangInt,
         out_specialized_component_type: OutRef<IComponentType>,
         out_diagnostics: OutRef<ISlangBlob>,
-    ) -> HRESULT;
+    ) -> Result<()>;
     pub fn link(
         &mut self,
         out_linked_component_type: OutRef<IComponentType>,
         out_diagnostics: OutRef<ISlangBlob>,
-    ) -> HRESULT;
+    ) -> Result<()>;
 
     fn stub_getEntryPointHostCallable(&mut self);
 
@@ -247,48 +247,48 @@ pub unsafe trait IComponentType: IUnknown {
         &mut self,
         new_name: *const c_char,
         out_entry_point: OutRef<IComponentType>,
-    ) -> HRESULT;
+    ) -> Result<()>;
     pub fn linkWithOptions(
         &mut self,
         out_linked_component_type: OutRef<IComponentType>,
         compiler_option_entry_count: u32,
         compiler_option_entries: *const slang_CompilerOptionEntry,
         out_diagnostics: OutRef<ISlangBlob>,
-    ) -> HRESULT;
+    ) -> Result<()>;
     pub fn getTargetCode(
         &mut self,
         target_index: SlangInt,
         out_code: OutRef<ISlangBlob>,
         out_diagnostics: OutRef<ISlangBlob>,
-    ) -> HRESULT;
+    ) -> Result<()>;
     pub fn getTargetMetadata(
         &mut self,
         target_index: SlangInt,
         out_metadata: OutRef<IMetadata>,
         out_diagnostics: OutRef<ISlangBlob>,
-    ) -> HRESULT;
+    ) -> Result<()>;
     pub fn getEntryPointMetadata(
         &mut self,
         entry_point_index: SlangInt,
         target_index: SlangInt,
         out_metadata: OutRef<IMetadata>,
         out_diagnostics: OutRef<ISlangBlob>,
-    ) -> HRESULT;
+    ) -> Result<()>;
 }
 
 #[interface("ec457f0e-9add-4e6b-851c-d7fa716d15fd")]
 pub unsafe trait ISlangWriter: IUnknown {
     pub fn beginAppendBuffer(&mut self, max_num_chars: usize) -> *mut c_char;
-    pub fn endAppendBuffer(&mut self, buffer: *mut c_char, num_chars: usize) -> HRESULT;
-    pub fn write(&mut self, chars: *mut c_char, num_chars: usize) -> HRESULT;
+    pub fn endAppendBuffer(&mut self, buffer: *mut c_char, num_chars: usize) -> Result<()>;
+    pub fn write(&mut self, chars: *mut c_char, num_chars: usize) -> Result<()>;
     pub fn flush(&mut self);
     pub fn is_console(&mut self) -> SlangBool;
-    pub fn setMode(&mut self, mode: SlangWriterMode) -> HRESULT;
+    pub fn setMode(&mut self, mode: SlangWriterMode) -> Result<()>;
 }
 
 #[interface("003a09fc-3a4d-4ba0-ad60-1fd863a915ab")]
 pub unsafe trait ISlangFileSystem: ISlangCastable {
-    pub fn loadFile(&mut self, path: *const c_char, out_blob: OutRef<ISlangBlob>) -> HRESULT;
+    pub fn loadFile(&mut self, path: *const c_char, out_blob: OutRef<ISlangBlob>) -> Result<()>;
 }
 
 #[interface("6264ab2b-a3e8-4a06-97f1-49bc2d2ab14d")]
@@ -297,7 +297,7 @@ pub unsafe trait ISlangSharedLibraryLoader: IUnknown {
         &self,
         path: *const c_char,
         shared_library_out: OutRef<ISlangSharedLibrary>,
-    ) -> HRESULT;
+    ) -> Result<()>;
 }
 
 #[interface("70dbc7c4-dc3b-4a07-ae7e-752af6a81555")]

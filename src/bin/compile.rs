@@ -1,10 +1,9 @@
 use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result};
-use korch_slang::com::ISlangSharedLibraryLoader;
 use korch_slang::{
-    CompileTarget, CustomSharedLibraryLoader, GlobalSession, LoadedLibrary, PassThrough,
-    SessionDescriptor, TargetDescriptor,
+    AsBoxedComponentType, CompileTarget, CompilerPaths, PassThrough, SessionDescriptor,
+    SlangContext, TargetDescriptor,
 };
 
 struct Config {
@@ -28,23 +27,12 @@ fn main() -> Result<()> {
 }
 
 fn compile_shader(config: Config) -> Result<()> {
-    let lib = unsafe {
-        libloading::Library::new(&config.slang_path)
-            .context("failed to open Slang compiler library")?
-    };
-
-    let loaded = LoadedLibrary::new(&lib)?;
-
-    let mut global_session = GlobalSession::new(&loaded)?;
+    let ctx = SlangContext::new(&config.slang_path)?;
+    let global_session = ctx.create_global_session(CompilerPaths {
+        dxil: Some(config.dxil_path),
+        dxcompiler: Some(config.dxcompiler_path),
+    })?;
     println!("slang version: {}", global_session.get_build_tag());
-
-    let custom_loader: ISlangSharedLibraryLoader = CustomSharedLibraryLoader {
-        dxil_path: config.dxil_path,
-        dxcompiler_path: config.dxcompiler_path,
-    }
-    .into();
-
-    global_session.set_library_loader(Some(&custom_loader));
 
     global_session.check_compile_target_support(CompileTarget::DXIL)?;
     global_session.check_pass_through_support(PassThrough::DXC)?;
@@ -54,7 +42,7 @@ fn compile_shader(config: Config) -> Result<()> {
         .context("target profile not found")?;
     println!("profile_id: {profile:?}");
 
-    let mut session = global_session
+    let session = global_session
         .create_session(&SessionDescriptor {
             search_paths: &[],
             targets: &[TargetDescriptor {
@@ -73,8 +61,15 @@ fn compile_shader(config: Config) -> Result<()> {
     )?;
 
     for entry_point in module.entry_points_iter() {
-        println!("entry_point: {}", entry_point.get_name(&loaded)?);
-        println!("stage: {:?}", entry_point.get_stage(&loaded)?);
+        println!("entry_point: {}", entry_point.get_name()?);
+        println!("stage: {:?}", entry_point.get_stage()?);
+
+        let linked = session
+            .create_composite_component([module.as_boxed(), entry_point.as_boxed()])?
+            .link()?;
+
+        let compiled = linked.get_entry_point_code(0, 0)?;
+        println!("compiled {} bytes", compiled.len());
     }
 
     Ok(())
