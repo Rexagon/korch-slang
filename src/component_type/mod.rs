@@ -3,12 +3,14 @@ use std::ptr::NonNull;
 
 use anyhow::{Context, Result};
 
+pub use self::conformance::*;
 pub use self::entry_point::*;
 pub use self::linked::*;
 pub use self::module::*;
 use crate::util::{from_ffi_string, to_ffi_string};
 use crate::{SlangContext, Stage, TypeKind, com, sys};
 
+mod conformance;
 mod entry_point;
 mod linked;
 mod module;
@@ -153,9 +155,9 @@ pub enum SpecializationArg<'a> {
 
 #[derive(Clone)]
 pub struct ComponentLayout<'a> {
-    parent: &'a com::IComponentType,
-    ctx: &'a SlangContext,
-    inner: NonNull<sys::SlangProgramLayout>,
+    pub(crate) parent: &'a com::IComponentType,
+    pub(crate) ctx: &'a SlangContext,
+    pub(crate) inner: NonNull<sys::SlangProgramLayout>,
 }
 
 impl<'a> ComponentLayout<'a> {
@@ -190,9 +192,9 @@ impl<'a> ComponentLayout<'a> {
 #[derive(Clone)]
 pub struct EntryPointLayout<'a> {
     #[expect(unused)]
-    parent: &'a com::IComponentType,
-    ctx: &'a SlangContext,
-    inner: NonNull<sys::SlangEntryPointLayout>,
+    pub(crate) parent: &'a com::IComponentType,
+    pub(crate) ctx: &'a SlangContext,
+    pub(crate) inner: NonNull<sys::SlangEntryPointLayout>,
 }
 
 impl EntryPointLayout<'_> {
@@ -213,9 +215,9 @@ impl EntryPointLayout<'_> {
 #[derive(Clone)]
 pub struct TypeLayout<'a> {
     #[expect(unused)]
-    parent: &'a com::IComponentType,
-    ctx: &'a SlangContext,
-    inner: NonNull<sys::SlangReflectionType>,
+    pub(crate) parent: &'a com::IComponentType,
+    pub(crate) ctx: &'a SlangContext,
+    pub(crate) inner: NonNull<sys::SlangReflectionType>,
 }
 
 impl TypeLayout<'_> {

@@ -5,12 +5,11 @@ use std::ffi::{c_char, c_void};
 use windows_core::{IUnknown, IUnknown_Vtbl, OutRef, Ref, Result, interface};
 
 use crate::sys::{
-    SlangBool, SlangCompileRequest, SlangCompileTarget, SlangInt, SlangInt32, SlangLayoutRules,
+    SlangCompileRequest, SlangCompileTarget, SlangInt, SlangInt32, SlangLayoutRules,
     SlangParameterCategory, SlangPassThrough, SlangPassThroughIntegral, SlangProfileID,
-    SlangProgramLayout, SlangStage, SlangUInt, SlangUUID, SlangWriterMode,
+    SlangProgramLayout, SlangReflectionType, SlangStage, SlangUInt, SlangUUID,
     slang_CompilerOptionEntry, slang_ContainerType, slang_DeclReflection, slang_FunctionReflection,
     slang_SessionDesc, slang_SourceLocation, slang_SpecializationArg, slang_TypeLayoutReflection,
-    slang_TypeReflection,
 };
 
 #[interface("c140b5fd-0c78-452e-ba7c-1a1e70c7f71c")]
@@ -97,25 +96,25 @@ pub unsafe trait ISession: IUnknown {
     ) -> Result<()>;
     pub fn specializeType(
         &mut self,
-        type_reflection: *mut slang_TypeReflection,
+        type_reflection: *mut SlangReflectionType,
         specialization_args: *const slang_SpecializationArg,
         specialization_arg_count: SlangInt,
         out_diagnostics: OutRef<ISlangBlob>,
-    ) -> *mut slang_TypeReflection;
+    ) -> *mut SlangReflectionType;
     pub fn getTypeLayout(
         &mut self,
-        ty: *mut slang_TypeReflection,
+        ty: *mut SlangReflectionType,
         target_index: SlangInt,
         rules: SlangLayoutRules,
         out_diagnostics: OutRef<ISlangBlob>,
     ) -> *mut slang_TypeLayoutReflection;
     pub fn getContainerType(
         &mut self,
-        element_type: *mut slang_TypeReflection,
+        element_type: *mut SlangReflectionType,
         container_type: slang_ContainerType,
         out_diagnostics: OutRef<ISlangBlob>,
-    ) -> *mut slang_TypeReflection;
-    pub fn getDynamicType(&mut self) -> *mut slang_TypeReflection;
+    ) -> *mut SlangReflectionType;
+    pub fn getDynamicType(&mut self) -> *mut SlangReflectionType;
 
     fn stub_getTypeRTTIMangledName(&mut self);
     fn stub_getTypeConformanceWitnessMangledName(&mut self);
@@ -124,8 +123,8 @@ pub unsafe trait ISession: IUnknown {
 
     pub fn createTypeConformanceComponentType(
         &mut self,
-        ty: *mut slang_TypeReflection,
-        interface_ty: *mut slang_TypeReflection,
+        ty: *mut SlangReflectionType,
+        interface_ty: *mut SlangReflectionType,
         out_conformance: OutRef<ITypeConformance>,
         conformance_id_override: SlangInt,
         out_diagnostics: OutRef<ISlangBlob>,
@@ -274,16 +273,6 @@ pub unsafe trait IComponentType: IUnknown {
         out_metadata: OutRef<IMetadata>,
         out_diagnostics: OutRef<ISlangBlob>,
     ) -> Result<()>;
-}
-
-#[interface("ec457f0e-9add-4e6b-851c-d7fa716d15fd")]
-pub unsafe trait ISlangWriter: IUnknown {
-    pub fn beginAppendBuffer(&mut self, max_num_chars: usize) -> *mut c_char;
-    pub fn endAppendBuffer(&mut self, buffer: *mut c_char, num_chars: usize) -> Result<()>;
-    pub fn write(&mut self, chars: *mut c_char, num_chars: usize) -> Result<()>;
-    pub fn flush(&mut self);
-    pub fn is_console(&mut self) -> SlangBool;
-    pub fn setMode(&mut self, mode: SlangWriterMode) -> Result<()>;
 }
 
 #[interface("003a09fc-3a4d-4ba0-ad60-1fd863a915ab")]

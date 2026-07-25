@@ -21,10 +21,15 @@ struct LowQuality : IQuality
     }
 }
 
+uniform uint dynamicSelector;
+
 [shader("compute")]
 [numthreads(1, 1, 1)]
 void computeMain<T : IQuality>(uint3 threadId: SV_DispatchThreadID)
 {
     uint index = threadId.x;
     result[index] = buffer0[index] + buffer1[index] + T::getValue();
+
+    var dynamic = createDynamicObject<IQuality>(dynamicSelector, 0);
+    result[index] += dynamic.getValue();
 }

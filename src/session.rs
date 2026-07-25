@@ -7,9 +7,10 @@ use std::path::{Path, PathBuf};
 use anyhow::{Context, Result};
 use windows_core::Interface;
 
+use crate::component_type::TypeLayout;
 use crate::{
     AsBoxedComponentType, BoxedComponentType, CompileTarget, CompilerPaths, MatrixLayoutMode,
-    Module, PassThrough, ProfileId, SlangContext, com, sys,
+    Module, PassThrough, ProfileId, SlangContext, TypeConformance, com, sys,
 };
 
 pub struct GlobalSession {
@@ -211,4 +212,41 @@ impl Session {
             ctx: self.ctx.clone(),
         })
     }
+
+    pub fn create_type_conformance(
+        &self,
+        desc: &TypeConformanceDescriptor<'_>,
+    ) -> Result<TypeConformance> {
+        let override_id = match desc.override_id {
+            Some(id) => {
+                anyhow::ensure!(id < i64::MAX as u64, "invalid override id");
+                id as i64
+            }
+            None => -1,
+        };
+
+        let mut diagnostics = None;
+        let mut conformance = None;
+        unsafe {
+            self.inner.createTypeConformanceComponentType(
+                desc.ty.inner.as_ptr(),
+                desc.interface.inner.as_ptr(),
+                &mut conformance,
+                override_id,
+                &mut diagnostics,
+            )?;
+        }
+        self.ctx.log_diagnostics(diagnostics);
+
+        Ok(TypeConformance {
+            inner: conformance.context("type conformance was not created")?,
+            ctx: self.ctx.clone(),
+        })
+    }
+}
+
+pub struct TypeConformanceDescriptor<'a> {
+    pub interface: TypeLayout<'a>,
+    pub ty: TypeLayout<'a>,
+    pub override_id: Option<u64>,
 }

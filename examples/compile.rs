@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 use anyhow::{Context, Result};
 use korch_slang::{
     AsBoxedComponentType, CompileTarget, CompilerPaths, PassThrough, SessionDescriptor,
-    SlangContext, SpecializationArg, TargetDescriptor,
+    SlangContext, SpecializationArg, TargetDescriptor, TypeConformanceDescriptor,
 };
 
 struct Config {
@@ -65,13 +65,25 @@ fn compile_shader(config: Config) -> Result<()> {
 
         let layout = module.get_layout()?;
         let high_quality = layout.find_type("HighQuality").context("no type")?;
+        let quality_interface = layout.find_type("IQuality").context("no type")?;
 
         let specialized = entry_point
-            .specialize(&[SpecializationArg::Type(high_quality)])
+            .specialize(&[SpecializationArg::Type(high_quality.clone())])
             .context("failed to specialize entry point")?;
 
+        let conformance_high_quality =
+            session.create_type_conformance(&TypeConformanceDescriptor {
+                interface: quality_interface,
+                ty: high_quality,
+                override_id: Some(0),
+            })?;
+
         let linked = session
-            .combine_component_types([module.as_boxed(), specialized.as_boxed()])
+            .combine_component_types([
+                module.as_boxed(),
+                specialized.as_boxed(),
+                conformance_high_quality.as_boxed(),
+            ])
             .context("failed to combine component types")?
             .link()
             .context("failed to link component types")?;
