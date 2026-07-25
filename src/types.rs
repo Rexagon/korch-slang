@@ -57,6 +57,123 @@ define_enum!(TypeKind : sys::SlangTypeKind, {
     Enum = SlangTypeKind_SLANG_TYPE_KIND_ENUM,
 });
 
+// === Diagnostic Color ===
+
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DiagnosticColor {
+    #[default]
+    Auto,
+    Always,
+    Never,
+}
+
+impl From<DiagnosticColor> for sys::SlangDiagnosticColor {
+    fn from(value: DiagnosticColor) -> Self {
+        use sys::*;
+        match value {
+            DiagnosticColor::Auto => SlangDiagnosticColor_SLANG_DIAGNOSTIC_COLOR_AUTO,
+            DiagnosticColor::Always => SlangDiagnosticColor_SLANG_DIAGNOSTIC_COLOR_ALWAYS,
+            DiagnosticColor::Never => SlangDiagnosticColor_SLANG_DIAGNOSTIC_COLOR_NEVER,
+        }
+    }
+}
+
+// === Optimization Level ===
+
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
+pub enum OptimizationLevel {
+    None,
+    #[default]
+    Default,
+    High,
+    Maximal,
+}
+
+impl From<OptimizationLevel> for sys::SlangOptimizationLevel {
+    fn from(value: OptimizationLevel) -> Self {
+        use sys::*;
+        match value {
+            OptimizationLevel::None => SlangOptimizationLevel_SLANG_OPTIMIZATION_LEVEL_NONE,
+            OptimizationLevel::Default => SlangOptimizationLevel_SLANG_OPTIMIZATION_LEVEL_DEFAULT,
+            OptimizationLevel::High => SlangOptimizationLevel_SLANG_OPTIMIZATION_LEVEL_HIGH,
+            OptimizationLevel::Maximal => SlangOptimizationLevel_SLANG_OPTIMIZATION_LEVEL_MAXIMAL,
+        }
+    }
+}
+
+// === Line Directive Mode ===
+
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
+pub enum LineDirectiveMode {
+    #[default]
+    Default,
+    None,
+    Standard,
+    Glsl,
+    SourceMap,
+}
+
+impl From<LineDirectiveMode> for sys::SlangLineDirectiveMode {
+    fn from(value: LineDirectiveMode) -> Self {
+        use sys::*;
+        match value {
+            LineDirectiveMode::Default => SlangLineDirectiveMode_SLANG_LINE_DIRECTIVE_MODE_DEFAULT,
+            LineDirectiveMode::None => SlangLineDirectiveMode_SLANG_LINE_DIRECTIVE_MODE_NONE,
+            LineDirectiveMode::Standard => {
+                SlangLineDirectiveMode_SLANG_LINE_DIRECTIVE_MODE_STANDARD
+            }
+            LineDirectiveMode::Glsl => SlangLineDirectiveMode_SLANG_LINE_DIRECTIVE_MODE_GLSL,
+            LineDirectiveMode::SourceMap => {
+                SlangLineDirectiveMode_SLANG_LINE_DIRECTIVE_MODE_SOURCE_MAP
+            }
+        }
+    }
+}
+
+// === Debug Info Level ===
+
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DebugInfoLevel {
+    None,
+    Minimal,
+    #[default]
+    Standard,
+    Maximal,
+}
+
+impl From<DebugInfoLevel> for sys::SlangDebugInfoLevel {
+    fn from(value: DebugInfoLevel) -> Self {
+        use sys::*;
+        match value {
+            DebugInfoLevel::None => SlangDebugInfoLevel_SLANG_DEBUG_INFO_LEVEL_NONE,
+            DebugInfoLevel::Minimal => SlangDebugInfoLevel_SLANG_DEBUG_INFO_LEVEL_MINIMAL,
+            DebugInfoLevel::Standard => SlangDebugInfoLevel_SLANG_DEBUG_INFO_LEVEL_STANDARD,
+            DebugInfoLevel::Maximal => SlangDebugInfoLevel_SLANG_DEBUG_INFO_LEVEL_MAXIMAL,
+        }
+    }
+}
+
+// === FP Mode ===
+
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FloatingPointMode {
+    #[default]
+    Default,
+    Fast,
+    Precise,
+}
+
+impl From<FloatingPointMode> for sys::SlangFloatingPointMode {
+    fn from(value: FloatingPointMode) -> Self {
+        use sys::*;
+        match value {
+            FloatingPointMode::Default => SlangFloatingPointMode_SLANG_FLOATING_POINT_MODE_DEFAULT,
+            FloatingPointMode::Fast => SlangFloatingPointMode_SLANG_FLOATING_POINT_MODE_FAST,
+            FloatingPointMode::Precise => SlangFloatingPointMode_SLANG_FLOATING_POINT_MODE_PRECISE,
+        }
+    }
+}
+
 // === Matrix Mode ===
 
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
@@ -108,8 +225,12 @@ impl From<PassThrough> for sys::SlangPassThrough {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[repr(C)]
+#[repr(transparent)]
 pub struct ProfileId(pub(crate) u32);
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[repr(transparent)]
+pub struct CapabilityID(pub(crate) u32);
 
 // === Language ===
 

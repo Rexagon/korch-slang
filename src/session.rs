@@ -7,9 +7,9 @@ use std::path::{Path, PathBuf};
 use anyhow::{Context, Result};
 
 use crate::{
-    AsBoxedComponentType, BoxedComponentType, CompileTarget, CompilerPaths, MatrixLayoutMode,
-    Module, PassThrough, ProfileId, SlangContext, TypeConformance, TypeConformanceDescriptor, com,
-    sys,
+    AsBoxedComponentType, BoxedComponentType, CapabilityID, CompileTarget, CompilerOptions,
+    CompilerPaths, MatrixLayoutMode, Module, PassThrough, ProfileId, SlangContext, TypeConformance,
+    TypeConformanceDescriptor, com, sys,
 };
 
 pub struct GlobalSession {
@@ -68,6 +68,12 @@ impl GlobalSession {
         (id != 0).then_some(ProfileId(id))
     }
 
+    pub fn find_capability(&self, name: &str) -> Option<CapabilityID> {
+        let name = CString::new(name).ok()?;
+        let id = unsafe { self.inner.findProfile(name.as_ptr()) };
+        (id != 0).then_some(CapabilityID(id))
+    }
+
     pub fn create_session(&self, desc: &SessionDescriptor) -> Result<Session> {
         Session::new(self, desc)
     }
@@ -81,12 +87,14 @@ pub struct SessionDescriptor<'a, 's, 'v> {
     pub targets: &'a [TargetDescriptor],
     pub preprocessor_macros: &'a [(&'s str, Cow<'v, str>)],
     pub default_matrix_layout_mode: MatrixLayoutMode,
+    pub options: CompilerOptions,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug)]
 pub struct TargetDescriptor {
     pub format: CompileTarget,
     pub profile: ProfileId,
+    pub options: CompilerOptions,
 }
 
 #[derive(Clone)]
@@ -107,8 +115,8 @@ impl Session {
                 floatingPointMode: sys::SlangFloatingPointMode_SLANG_FLOATING_POINT_MODE_DEFAULT,
                 lineDirectiveMode: sys::SlangLineDirectiveMode_SLANG_LINE_DIRECTIVE_MODE_DEFAULT,
                 forceGLSLScalarBufferLayout: false,
-                compilerOptionEntries: std::ptr::null(),
-                compilerOptionEntryCount: 0,
+                compilerOptionEntries: target.options.entries.as_ptr(),
+                compilerOptionEntryCount: target.options.entries.len() as _,
             });
         }
 
@@ -148,8 +156,8 @@ impl Session {
             fileSystem: std::ptr::null_mut(),
             enableEffectAnnotations: false,
             allowGLSLSyntax: false,
-            compilerOptionEntries: std::ptr::null(),
-            compilerOptionEntryCount: 0,
+            compilerOptionEntries: desc.options.entries.as_ptr(),
+            compilerOptionEntryCount: desc.options.entries.len() as _,
             skipSPIRVValidation: false,
         };
 

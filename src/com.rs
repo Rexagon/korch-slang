@@ -5,9 +5,9 @@ use std::ffi::{c_char, c_void};
 use windows_core::{IUnknown, IUnknown_Vtbl, OutRef, Ref, Result, interface};
 
 use crate::sys::{
-    SlangCompileRequest, SlangCompileTarget, SlangInt, SlangInt32, SlangLayoutRules,
-    SlangParameterCategory, SlangPassThrough, SlangPassThroughIntegral, SlangProfileID,
-    SlangProgramLayout, SlangReflectionType, SlangStage, SlangUInt, SlangUUID,
+    SlangCapabilityID, SlangCompileRequest, SlangCompileTarget, SlangInt, SlangInt32,
+    SlangLayoutRules, SlangParameterCategory, SlangPassThrough, SlangPassThroughIntegral,
+    SlangProfileID, SlangProgramLayout, SlangReflectionType, SlangStage, SlangUInt, SlangUUID,
     slang_CompilerOptionEntry, slang_ContainerType, slang_DeclReflection, slang_FunctionReflection,
     slang_SessionDesc, slang_SourceLocation, slang_SpecializationArg, slang_TypeLayoutReflection,
 };
@@ -15,54 +15,55 @@ use crate::sys::{
 #[interface("c140b5fd-0c78-452e-ba7c-1a1e70c7f71c")]
 pub unsafe trait IGlobalSession: IUnknown {
     pub fn createSession(
-        &mut self,
+        &self,
         desc: *const slang_SessionDesc,
         out_session: OutRef<ISession>,
     ) -> Result<()>;
-    pub fn findProfile(&mut self, name: *const c_char) -> SlangProfileID;
+    pub fn findProfile(&self, name: *const c_char) -> SlangProfileID;
 
-    fn stub_setDownstreamCompilerPath(&mut self);
-    fn stub_setDownstreamCompilerPrelude(&mut self);
-    fn stub_getDownstreamCompilerPrelude(&mut self);
+    fn stub_setDownstreamCompilerPath(&self);
+    fn stub_setDownstreamCompilerPrelude(&self);
+    fn stub_getDownstreamCompilerPrelude(&self);
 
-    pub fn getBuildTagString(&mut self) -> *const c_char;
+    pub fn getBuildTagString(&self) -> *const c_char;
 
-    fn stub_setDefaultDownstreamCompiler(&mut self);
-    fn stub_getDefaultDownstreamCompiler(&mut self);
-    fn stub_setLanguagePrelude(&mut self);
-    fn stub_getLanguagePrelude(&mut self);
+    fn stub_setDefaultDownstreamCompiler(&self);
+    fn stub_getDefaultDownstreamCompiler(&self);
+    fn stub_setLanguagePrelude(&self);
+    fn stub_getLanguagePrelude(&self);
 
     pub fn createCompileRequest(
-        &mut self,
+        &self,
         out_compile_request: *mut *mut SlangCompileRequest,
     ) -> Result<()>;
 
-    fn stub_addBuiltins(&mut self);
+    fn stub_addBuiltins(&self);
 
-    pub fn setSharedLibraryLoader(&mut self, loader: Ref<ISlangSharedLibraryLoader>);
-    pub fn getSharedLibraryLoader(&mut self) -> *mut c_void;
+    pub fn setSharedLibraryLoader(&self, loader: Ref<ISlangSharedLibraryLoader>);
+    pub fn getSharedLibraryLoader(&self) -> *mut c_void;
 
-    pub fn checkCompileTargetSupport(&mut self, target: SlangCompileTarget) -> Result<()>;
-    pub fn checkPassThroughSupport(&mut self, pass_through: SlangPassThrough) -> Result<()>;
+    pub fn checkCompileTargetSupport(&self, target: SlangCompileTarget) -> Result<()>;
+    pub fn checkPassThroughSupport(&self, pass_through: SlangPassThrough) -> Result<()>;
 
-    fn stub_compileCoreModule(&mut self);
-    fn stub_loadCoreModule(&mut self);
-    fn stub_saveCoreModule(&mut self);
+    fn stub_compileCoreModule(&self);
+    fn stub_loadCoreModule(&self);
+    fn stub_saveCoreModule(&self);
 
-    fn stub_findCapability(&mut self);
-    fn stub_setDownstreamCompilerForTransition(&mut self);
-    fn stub_getDownstreamCompilerForTransition(&mut self);
-    fn stub_getCompilerElapsedTime(&mut self);
-    fn stub_setSPIRVCoreGrammar(&mut self);
-    fn stub_parseCommandLineArguments(&mut self);
-    fn stub_getSessionDescDigest(&mut self);
-    fn stub_compileBuiltinModule(&mut self);
-    fn stub_loadBuiltinModule(&mut self);
-    fn stub_saveBuiltinModule(&mut self);
+    pub fn findCapability(&self, name: *const c_char) -> SlangCapabilityID;
+
+    fn stub_setDownstreamCompilerForTransition(&self);
+    fn stub_getDownstreamCompilerForTransition(&self);
+    fn stub_getCompilerElapsedTime(&self);
+    fn stub_setSPIRVCoreGrammar(&self);
+    fn stub_parseCommandLineArguments(&self);
+    fn stub_getSessionDescDigest(&self);
+    fn stub_compileBuiltinModule(&self);
+    fn stub_loadBuiltinModule(&self);
+    fn stub_saveBuiltinModule(&self);
 
     // NOTE: Can't call this for some reason.
     pub fn getDownstreamCompilerVersion(
-        &mut self,
+        &self,
         pass_through: SlangPassThroughIntegral,
         out_major: *mut i32,
         out_minor: *mut i32,
@@ -72,57 +73,57 @@ pub unsafe trait IGlobalSession: IUnknown {
 #[interface("67618701-d116-468f-ab3b-474bedce0e3d")]
 pub unsafe trait ISession: IUnknown {
     /// Returns IGlobalSession.
-    pub fn getGlobalSession(&mut self) -> *mut c_void;
+    pub fn getGlobalSession(&self) -> *mut c_void;
     /// Returns IModule.
     pub fn loadModule(
-        &mut self,
+        &self,
         module_name: *const c_char,
         out_diagnostics: OutRef<ISlangBlob>,
     ) -> *mut c_void;
     /// Returns IModule.
     pub fn loadModuleFromSource(
-        &mut self,
+        &self,
         module_name: *const c_char,
         path: *const c_char,
         source: Ref<ISlangBlob>,
         out_diagnostics: OutRef<ISlangBlob>,
     ) -> *mut c_void;
     pub fn createCompositeComponentType(
-        &mut self,
+        &self,
         component_types: *const IComponentType,
         component_type_count: SlangInt,
         out_composite_component_type: OutRef<IComponentType>,
         out_diagnostics: OutRef<ISlangBlob>,
     ) -> Result<()>;
     pub fn specializeType(
-        &mut self,
+        &self,
         type_reflection: *mut SlangReflectionType,
         specialization_args: *const slang_SpecializationArg,
         specialization_arg_count: SlangInt,
         out_diagnostics: OutRef<ISlangBlob>,
     ) -> *mut SlangReflectionType;
     pub fn getTypeLayout(
-        &mut self,
+        &self,
         ty: *mut SlangReflectionType,
         target_index: SlangInt,
         rules: SlangLayoutRules,
         out_diagnostics: OutRef<ISlangBlob>,
     ) -> *mut slang_TypeLayoutReflection;
     pub fn getContainerType(
-        &mut self,
+        &self,
         element_type: *mut SlangReflectionType,
         container_type: slang_ContainerType,
         out_diagnostics: OutRef<ISlangBlob>,
     ) -> *mut SlangReflectionType;
-    pub fn getDynamicType(&mut self) -> *mut SlangReflectionType;
+    pub fn getDynamicType(&self) -> *mut SlangReflectionType;
 
-    fn stub_getTypeRTTIMangledName(&mut self);
-    fn stub_getTypeConformanceWitnessMangledName(&mut self);
-    fn stub_getTypeConformanceWitnessSequentialID(&mut self);
-    fn stub_createCompileRequest(&mut self);
+    fn stub_getTypeRTTIMangledName(&self);
+    fn stub_getTypeConformanceWitnessMangledName(&self);
+    fn stub_getTypeConformanceWitnessSequentialID(&self);
+    fn stub_createCompileRequest(&self);
 
     pub fn createTypeConformanceComponentType(
-        &mut self,
+        &self,
         ty: *mut SlangReflectionType,
         interface_ty: *mut SlangReflectionType,
         out_conformance: OutRef<ITypeConformance>,
@@ -132,31 +133,31 @@ pub unsafe trait ISession: IUnknown {
 
     /// Returns IModule.
     pub fn loadModuleFromIRBlob(
-        &mut self,
+        &self,
         module_name: *const c_char,
         path: *const c_char,
         source: Ref<ISlangBlob>,
         out_diagnostics: OutRef<ISlangBlob>,
     ) -> *mut c_void;
-    pub fn getLoadedModuleCount(&mut self) -> SlangInt;
-    pub fn getLoadedModule(&mut self, index: SlangInt) -> *mut c_void;
+    pub fn getLoadedModuleCount(&self) -> SlangInt;
+    pub fn getLoadedModule(&self, index: SlangInt) -> *mut c_void;
 
-    fn stub_isBinaryModuleUpToDate(&mut self);
+    fn stub_isBinaryModuleUpToDate(&self);
 
     /// Returns IModule.
     pub fn loadModuleFromSourceString(
-        &mut self,
+        &self,
         module_name: *const c_char,
         path: *const c_char,
         str: *const c_char,
         out_diagnostics: OutRef<ISlangBlob>,
     ) -> *mut c_void;
 
-    fn stub_getDynamicObjectRTTIBytes(&mut self);
-    fn stub_loadModuleInfoFromIRBlob(&mut self);
+    fn stub_getDynamicObjectRTTIBytes(&self);
+    fn stub_loadModuleInfoFromIRBlob(&self);
 
     pub fn getDeclSourceLocation(
-        &mut self,
+        &self,
         decl: *mut slang_DeclReflection,
         out_location: *mut slang_SourceLocation,
     ) -> Result<()>;
@@ -165,32 +166,32 @@ pub unsafe trait ISession: IUnknown {
 #[interface("0c720e64-8722-4d31-8990-638a98b1c279")]
 pub unsafe trait IModule: IComponentType {
     pub fn findEntryPointByName(
-        &mut self,
+        &self,
         name: *const c_char,
         out_entry_point: OutRef<IEntryPoint>,
     ) -> Result<()>;
-    pub fn getDefinedEntryPointCount(&mut self) -> SlangInt32;
+    pub fn getDefinedEntryPointCount(&self) -> SlangInt32;
     pub fn getDefinedEntryPoint(
-        &mut self,
+        &self,
         index: SlangInt32,
         out_entry_point: OutRef<IEntryPoint>,
     ) -> Result<()>;
-    pub fn serialize(&mut self, out_serialized_blob: OutRef<ISlangBlob>) -> Result<()>;
-    pub fn writeToFile(&mut self, filename: *const c_char) -> Result<()>;
-    pub fn getName(&mut self) -> *const c_char;
-    pub fn getFilePath(&mut self) -> *const c_char;
-    pub fn getUniqueIdentity(&mut self) -> *const c_char;
+    pub fn serialize(&self, out_serialized_blob: OutRef<ISlangBlob>) -> Result<()>;
+    pub fn writeToFile(&self, filename: *const c_char) -> Result<()>;
+    pub fn getName(&self) -> *const c_char;
+    pub fn getFilePath(&self) -> *const c_char;
+    pub fn getUniqueIdentity(&self) -> *const c_char;
     pub fn findAndCheckEntryPoint(
-        &mut self,
+        &self,
         name: *const c_char,
         stage: SlangStage,
         out_entry_point: OutRef<IEntryPoint>,
         out_diagnostics: OutRef<ISlangBlob>,
     ) -> Result<()>;
-    pub fn getDependencyFileCount(&mut self) -> SlangInt32;
-    pub fn getDependencyFilePath(&mut self, index: SlangInt32) -> *const c_char;
-    pub fn getModuleReflection(&mut self) -> *mut slang_DeclReflection;
-    pub fn disassemble(&mut self, out_disassembled_blob: OutRef<ISlangBlob>) -> Result<()>;
+    pub fn getDependencyFileCount(&self) -> SlangInt32;
+    pub fn getDependencyFilePath(&self, index: SlangInt32) -> *const c_char;
+    pub fn getModuleReflection(&self) -> *mut slang_DeclReflection;
+    pub fn disassemble(&self, out_disassembled_blob: OutRef<ISlangBlob>) -> Result<()>;
 }
 
 #[interface("73eb3147-e544-41b5-b8f0-a244df21940b")]
@@ -198,76 +199,76 @@ pub unsafe trait ITypeConformance: IComponentType {}
 
 #[interface("8f241361-f5bd-4ca0-a3ac-02f7fa2402b8")]
 pub unsafe trait IEntryPoint: IComponentType {
-    pub fn getFunctionReflection(&mut self) -> *mut slang_FunctionReflection;
+    pub fn getFunctionReflection(&self) -> *mut slang_FunctionReflection;
 }
 
 #[interface("5bc42be8-5c50-4929-9e5e-d15e7c24015f")]
 pub unsafe trait IComponentType: IUnknown {
     /// Returns ISession.
-    pub fn getSession(&mut self) -> *mut c_void;
+    pub fn getSession(&self) -> *mut c_void;
     pub fn getLayout(
-        &mut self,
+        &self,
         target_index: SlangInt,
         out_diagnostics: OutRef<ISlangBlob>,
     ) -> *mut SlangProgramLayout;
-    pub fn getSpecializationParamCount(&mut self) -> SlangInt;
+    pub fn getSpecializationParamCount(&self) -> SlangInt;
     pub fn getEntryPointCode(
-        &mut self,
+        &self,
         entry_point_index: SlangInt,
         target_index: SlangInt,
         out_code: OutRef<ISlangBlob>,
         out_diagnostics: OutRef<ISlangBlob>,
     ) -> Result<()>;
 
-    fn stub_getResultAsFileSystem(&mut self);
+    fn stub_getResultAsFileSystem(&self);
 
     pub fn getEntryPointHash(
-        &mut self,
+        &self,
         entry_point_index: SlangInt,
         target_index: SlangInt,
         out_hash: OutRef<ISlangBlob>,
     );
     pub fn specialize(
-        &mut self,
+        &self,
         specialization_args: *const slang_SpecializationArg,
         specialization_arg_count: SlangInt,
         out_specialized_component_type: OutRef<IComponentType>,
         out_diagnostics: OutRef<ISlangBlob>,
     ) -> Result<()>;
     pub fn link(
-        &mut self,
+        &self,
         out_linked_component_type: OutRef<IComponentType>,
         out_diagnostics: OutRef<ISlangBlob>,
     ) -> Result<()>;
 
-    fn stub_getEntryPointHostCallable(&mut self);
+    fn stub_getEntryPointHostCallable(&self);
 
     pub fn renameEntryPoint(
-        &mut self,
+        &self,
         new_name: *const c_char,
         out_entry_point: OutRef<IComponentType>,
     ) -> Result<()>;
     pub fn linkWithOptions(
-        &mut self,
+        &self,
         out_linked_component_type: OutRef<IComponentType>,
         compiler_option_entry_count: u32,
         compiler_option_entries: *const slang_CompilerOptionEntry,
         out_diagnostics: OutRef<ISlangBlob>,
     ) -> Result<()>;
     pub fn getTargetCode(
-        &mut self,
+        &self,
         target_index: SlangInt,
         out_code: OutRef<ISlangBlob>,
         out_diagnostics: OutRef<ISlangBlob>,
     ) -> Result<()>;
     pub fn getTargetMetadata(
-        &mut self,
+        &self,
         target_index: SlangInt,
         out_metadata: OutRef<IMetadata>,
         out_diagnostics: OutRef<ISlangBlob>,
     ) -> Result<()>;
     pub fn getEntryPointMetadata(
-        &mut self,
+        &self,
         entry_point_index: SlangInt,
         target_index: SlangInt,
         out_metadata: OutRef<IMetadata>,
@@ -277,7 +278,7 @@ pub unsafe trait IComponentType: IUnknown {
 
 #[interface("003a09fc-3a4d-4ba0-ad60-1fd863a915ab")]
 pub unsafe trait ISlangFileSystem: ISlangCastable {
-    pub fn loadFile(&mut self, path: *const c_char, out_blob: OutRef<ISlangBlob>) -> Result<()>;
+    pub fn loadFile(&self, path: *const c_char, out_blob: OutRef<ISlangBlob>) -> Result<()>;
 }
 
 #[interface("6264ab2b-a3e8-4a06-97f1-49bc2d2ab14d")]
@@ -297,18 +298,18 @@ pub unsafe trait ISlangSharedLibrary: ISlangCastable {
 #[interface("8044a8a3-ddc0-4b7f-af8e-026e905d7332")]
 pub unsafe trait IMetadata: ISlangCastable {
     pub fn isParameterLocationUsed(
-        &mut self,
+        &self,
         category: SlangParameterCategory,
         space_index: SlangUInt,
         register_index: SlangUInt,
         out_used: *mut bool,
     );
-    pub fn getDebugBuildIdentifier(&mut self) -> *const c_char;
+    pub fn getDebugBuildIdentifier(&self) -> *const c_char;
 }
 
 #[interface("87ede0e1-4852-44b0-8bf2-cb31874de239")]
 pub unsafe trait ISlangCastable: IUnknown {
-    pub fn castAs(&mut self, guid: &SlangUUID) -> *mut c_void;
+    pub fn castAs(&self, guid: &SlangUUID) -> *mut c_void;
 }
 
 #[interface("8ba5fb08-5195-40e2-ac58-0d989c3a0102")]

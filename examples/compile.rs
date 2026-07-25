@@ -2,8 +2,9 @@ use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result};
 use korch_slang::{
-    AsBoxedComponentType, CompileTarget, CompilerPaths, PassThrough, SessionDescriptor,
-    SlangContext, SpecializationArg, TargetDescriptor, TypeConformanceDescriptor,
+    AsBoxedComponentType, CompileTarget, CompilerOptions, CompilerPaths, DiagnosticColor,
+    PassThrough, SessionDescriptor, SlangContext, SpecializationArg, TargetDescriptor,
+    TypeConformanceDescriptor,
 };
 
 struct Config {
@@ -48,13 +49,16 @@ fn compile_shader(config: Config) -> Result<()> {
                 TargetDescriptor {
                     format: CompileTarget::DXIL,
                     profile,
+                    options: CompilerOptions::default(),
                 },
                 TargetDescriptor {
                     format: CompileTarget::HLSL,
                     profile,
+                    options: CompilerOptions::default(),
                 },
             ],
             preprocessor_macros: &[],
+            options: CompilerOptions::default().diagnostic_color(DiagnosticColor::Always),
             ..Default::default()
         })
         .context("failed to create session")?;
