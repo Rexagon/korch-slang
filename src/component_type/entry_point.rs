@@ -6,6 +6,7 @@ use crate::{AsBoxedComponentType, BoxedComponentTypeRef, SlangContext, Stage, co
 #[derive(Clone)]
 pub struct EntryPoint {
     pub(crate) inner: com::IEntryPoint,
+    pub(crate) session: com::ISession,
     pub(crate) ctx: SlangContext,
 }
 
@@ -54,13 +55,8 @@ impl AsBoxedComponentType for EntryPoint {
     fn as_boxed(&self) -> BoxedComponentTypeRef<'_> {
         BoxedComponentTypeRef {
             inner: &self.inner,
+            session: &self.session,
             ctx: &self.ctx,
         }
-    }
-}
-
-impl AsRef<com::IEntryPoint> for EntryPoint {
-    fn as_ref(&self) -> &com::IEntryPoint {
-        &self.inner
     }
 }

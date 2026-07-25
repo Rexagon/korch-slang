@@ -1,13 +1,11 @@
 pub use crate::component_type::{
     AsBoxedComponentType, BoxedComponentType, BoxedComponentTypeRef, ComponentLayout, EntryPoint,
     EntryPointLayout, EntryPointsIter, EntryPointsLayoutIter, LinkedModule, Module,
-    SpecializationArg, TypeConformance, TypeLayout,
+    SpecializationArg, TypeConformance, TypeConformanceDescriptor, TypeLayout,
 };
 pub use crate::context::SlangContext;
 pub use crate::env::CompilerPaths;
-pub use crate::session::{
-    GlobalSession, Session, SessionDescriptor, TargetDescriptor, TypeConformanceDescriptor,
-};
+pub use crate::session::{GlobalSession, Session, SessionDescriptor, TargetDescriptor};
 pub use crate::types::{
     CompileTarget, MatrixLayoutMode, PassThrough, ProfileId, SourceLanguage, Stage, TypeKind,
 };

@@ -25,6 +25,7 @@ pub trait AsBoxedComponentType {
         let r = self.as_boxed();
         BoxedComponentType {
             inner: r.inner.clone(),
+            session: r.session.clone(),
             ctx: r.ctx.clone(),
         }
     }
@@ -40,6 +41,7 @@ pub trait AsBoxedComponentType {
 
         Ok(LinkedModule {
             inner: linked.context("components were not linked")?,
+            session: boxed.session.clone(),
             ctx: boxed.ctx.clone(),
         })
     }
@@ -84,6 +86,7 @@ pub trait AsBoxedComponentType {
 
         Ok(BoxedComponentType {
             inner: specialized.context("component was not specialized")?,
+            session: boxed.session.clone(),
             ctx: boxed.ctx.clone(),
         })
     }
@@ -105,6 +108,7 @@ pub trait AsBoxedComponentType {
 #[derive(Clone)]
 pub struct BoxedComponentType {
     pub(crate) inner: com::IComponentType,
+    pub(crate) session: com::ISession,
     pub(crate) ctx: SlangContext,
 }
 
@@ -112,6 +116,7 @@ impl AsBoxedComponentType for BoxedComponentType {
     fn as_boxed(&self) -> BoxedComponentTypeRef<'_> {
         BoxedComponentTypeRef {
             inner: &self.inner,
+            session: &self.session,
             ctx: &self.ctx,
         }
     }
@@ -130,6 +135,7 @@ impl AsRef<com::IComponentType> for BoxedComponentType {
 #[derive(Clone)]
 pub struct BoxedComponentTypeRef<'a> {
     pub(crate) inner: &'a com::IComponentType,
+    pub(crate) session: &'a com::ISession,
     pub(crate) ctx: &'a SlangContext,
 }
 
@@ -137,6 +143,7 @@ impl AsBoxedComponentType for BoxedComponentTypeRef<'_> {
     fn as_boxed(&self) -> BoxedComponentTypeRef<'_> {
         BoxedComponentTypeRef {
             inner: self.inner,
+            session: self.session,
             ctx: self.ctx,
         }
     }

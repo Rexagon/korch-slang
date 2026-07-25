@@ -5,12 +5,11 @@ use std::ffi::{CStr, CString};
 use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result};
-use windows_core::Interface;
 
-use crate::component_type::TypeLayout;
 use crate::{
     AsBoxedComponentType, BoxedComponentType, CompileTarget, CompilerPaths, MatrixLayoutMode,
-    Module, PassThrough, ProfileId, SlangContext, TypeConformance, com, sys,
+    Module, PassThrough, ProfileId, SlangContext, TypeConformance, TypeConformanceDescriptor, com,
+    sys,
 };
 
 pub struct GlobalSession {
@@ -90,6 +89,7 @@ pub struct TargetDescriptor {
     pub profile: ProfileId,
 }
 
+#[derive(Clone)]
 pub struct Session {
     pub(crate) inner: com::ISession,
     pub(crate) ctx: SlangContext,
@@ -189,17 +189,21 @@ impl Session {
         for item in items {
             let boxed = item.as_boxed();
             anyhow::ensure!(
+                self.inner == *boxed.session,
+                "all components must be from the same `Session`"
+            );
+            anyhow::ensure!(
                 self.ctx == *boxed.ctx,
                 "all components must be from the same `SlangContext`"
             );
-            component_types.push(boxed.inner.as_raw());
+            component_types.push(boxed.inner.clone());
         }
 
         let mut diagnostics = None;
         let mut composite_type = None;
         let result = unsafe {
             self.inner.createCompositeComponentType(
-                component_types.as_ptr().cast(),
+                component_types.as_ptr(),
                 component_types.len() as _,
                 &mut composite_type,
                 &mut diagnostics,
@@ -210,6 +214,7 @@ impl Session {
 
         Ok(BoxedComponentType {
             inner: composite_type.context("composite context type was not created")?,
+            session: self.inner.clone(),
             ctx: self.ctx.clone(),
         })
     }
@@ -218,37 +223,6 @@ impl Session {
         &self,
         desc: &TypeConformanceDescriptor<'_>,
     ) -> Result<TypeConformance> {
-        let override_id = match desc.override_id {
-            Some(id) => {
-                anyhow::ensure!(id < i64::MAX as u64, "invalid override id");
-                id as i64
-            }
-            None => -1,
-        };
-
-        let mut diagnostics = None;
-        let mut conformance = None;
-        let result = unsafe {
-            self.inner.createTypeConformanceComponentType(
-                desc.ty.inner.as_ptr(),
-                desc.interface.inner.as_ptr(),
-                &mut conformance,
-                override_id,
-                &mut diagnostics,
-            )
-        };
-        self.ctx.log_diagnostics(diagnostics);
-        result?;
-
-        Ok(TypeConformance {
-            inner: conformance.context("type conformance was not created")?,
-            ctx: self.ctx.clone(),
-        })
+        TypeConformance::new(self, desc)
     }
-}
-
-pub struct TypeConformanceDescriptor<'a> {
-    pub interface: TypeLayout<'a>,
-    pub ty: TypeLayout<'a>,
-    pub override_id: Option<u64>,
 }

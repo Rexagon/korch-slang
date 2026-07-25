@@ -9,6 +9,7 @@ use crate::{AsBoxedComponentType, BoxedComponentTypeRef, EntryPoint, Session, Sl
 #[derive(Clone)]
 pub struct Module {
     inner: com::IModule,
+    session: com::ISession,
     ctx: SlangContext,
 }
 
@@ -43,6 +44,7 @@ impl Module {
 
         Ok(Self {
             inner: inner.clone(),
+            session: session.inner.clone(),
             ctx: session.ctx.clone(),
         })
     }
@@ -76,6 +78,7 @@ impl Module {
 
         entry_point.map(|inner| EntryPoint {
             inner,
+            session: self.session.clone(),
             ctx: self.ctx.clone(),
         })
     }
@@ -90,6 +93,7 @@ impl Module {
         };
         entry_point.map(|inner| EntryPoint {
             inner,
+            session: self.session.clone(),
             ctx: self.ctx.clone(),
         })
     }
@@ -99,14 +103,9 @@ impl AsBoxedComponentType for Module {
     fn as_boxed(&self) -> BoxedComponentTypeRef<'_> {
         BoxedComponentTypeRef {
             inner: &self.inner,
+            session: &self.session,
             ctx: &self.ctx,
         }
-    }
-}
-
-impl AsRef<com::IComponentType> for Module {
-    fn as_ref(&self) -> &com::IComponentType {
-        &self.inner
     }
 }
 

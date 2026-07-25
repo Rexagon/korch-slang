@@ -5,6 +5,7 @@ use crate::{AsBoxedComponentType, BoxedComponentTypeRef, SlangContext, com};
 #[derive(Clone)]
 pub struct LinkedModule {
     pub(crate) inner: com::IComponentType,
+    pub(crate) session: com::ISession,
     pub(crate) ctx: SlangContext,
 }
 
@@ -72,6 +73,7 @@ impl AsBoxedComponentType for LinkedModule {
     fn as_boxed(&self) -> BoxedComponentTypeRef<'_> {
         BoxedComponentTypeRef {
             inner: &self.inner,
+            session: &self.session,
             ctx: &self.ctx,
         }
     }
