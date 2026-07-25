@@ -3,6 +3,9 @@ use anyhow::{Context, Result};
 use crate::util::from_ffi_string;
 use crate::{AsBoxedComponentType, BoxedComponentTypeRef, SlangContext, Stage, com, sys};
 
+/// A component type representing an entry point.
+///
+/// Its component layout reflection contains exactly one entry point.
 #[derive(Clone)]
 pub struct EntryPoint {
     pub(crate) inner: com::IEntryPoint,

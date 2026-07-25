@@ -6,6 +6,18 @@ use windows_core::Interface;
 use crate::util::{to_ffi_path, to_ffi_string};
 use crate::{AsBoxedComponentType, BoxedComponentTypeRef, EntryPoint, Session, SlangContext, com};
 
+/// A module is the granularity of shader code compilation and loading.
+///
+/// In most cases a module corresponds to a single compile "translation unit."
+/// This will often be a single `.slang` or `.hlsl` file and everything it
+/// `#include`s.
+///
+/// Notably, a module `M` does *not* include the things it `import`s, as these
+/// as distinct modules that `M` depends on. There is a directed graph of
+/// module dependencies, and all modules in the graph must belong to the
+/// same session (`ISession`).
+///
+/// A module establishes a namespace for looking up types, functions, etc.
 #[derive(Clone)]
 pub struct Module {
     inner: com::IModule,
@@ -111,6 +123,7 @@ impl AsBoxedComponentType for Module {
 
 // === Iter ===
 
+/// An iterator over entry points in [`Module`].
 #[derive(Clone)]
 pub struct EntryPointsIter<'a> {
     module: &'a Module,

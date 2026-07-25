@@ -14,6 +14,7 @@ use crate::sys::SlangUUID;
 
 macro_rules! define_paths {
     ($ident:ident, { $($path:ident = $name:literal),*$(,)? }) => {
+        /// User-defined overrides for compiler libraries discovery.
         #[derive(Default, Clone)]
         pub struct $ident {
             $(pub(crate) $path: Option<PathBuf>,)*

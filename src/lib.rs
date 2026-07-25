@@ -1,3 +1,5 @@
+#![doc = include_str!("../README.md")]
+
 pub use crate::component_type::{
     AsBoxedComponentType, BoxedComponentType, BoxedComponentTypeRef, ComponentLayout, EntryPoint,
     EntryPointLayout, EntryPointsIter, EntryPointsLayoutIter, LinkedModule, Module,

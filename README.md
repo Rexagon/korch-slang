@@ -7,26 +7,26 @@
 ```rust
 use korch_slang::*;
 
-// At first we need to load an Slang compiler library.
+// First, we need to load the Slang compiler library.
 let ctx = SlangContext::new("/usr/local/lib/libslang-compiler.so")?;
-// Then we can set a writer for a diagnostic output.
-// By default it's `std::io::sink()` and nothing is visible.
+// Then we can set a writer for diagnostic output.
+// By default, it is `std::io::sink()`, so no diagnostics are visible.
 ctx.set_diagnostics_writer(std::io::stdout());
 
-// Create a `GlobalSession` and provide paths for required compilers.
+// Create a `GlobalSession` and provide paths to the required compiler libraries.
 let global_session = ctx.create_global_session(
     CompilerPaths::new()
         .dxil("/usr/local/lib/libdxil.so")
         .dxcompiler("/usr/local/lib/libdxcompiler.so")
 )?;
 
-// Get target profile ID.
+// Get a target profile ID.
 let profile = global_session.find_profile("sm_6_5")?;
 
-// Create compilation session. Each unique set of compiler options
-// requires a new session. Use specialization to keep them low.
+// Create a compilation session. Each unique set of compiler options
+// requires a new session. Use specialization to keep the number of sessions low.
 let session = global_session.create_session(&SessionDescriptor {
-    // Directories where to search for shaders by path.
+    // Directories to search when loading shaders by path.
     search_paths: &[
         "assets/lib",
         "assets/materials",
@@ -44,14 +44,14 @@ let session = global_session.create_session(&SessionDescriptor {
     ..Default::default()
 })?;
 
-// Load your shader.
+// Load a shader.
 let module = session.load_module(
     "test",
     Some(Path::new("test.slang")),
     include_str!("test.slang"),
 )?;
 
-// And compiler each entry point in it.
+// Compile each entry point in the shader.
 for entry_point in module.entry_points_iter() {
     println!("entry_point: {}", entry_point.get_name()?);
     println!("stage: {:?}", entry_point.get_stage()?);
@@ -68,9 +68,9 @@ for entry_point in module.entry_points_iter() {
 }
 ```
 
-See more examples [here](./examples).
+See the [examples](./examples) directory for more.
 
-> NOTE: This library supports both Linux and Windows. Simply specify the paths to the `so` or `dll` compiler libraries, depending on the target platform.
+> NOTE: This library supports both Linux and Windows. Specify paths to the `.so` or `.dll` compiler libraries, depending on the target platform.
 
 ## License
 

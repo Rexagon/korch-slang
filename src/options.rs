@@ -6,6 +6,15 @@ use crate::{
     LineDirectiveMode, OptimizationLevel, ProfileId, Stage, sys,
 };
 
+/// A set of Slang or pass-through compiler options.
+///
+/// NOTE: Some options are related to the Slang compiler,
+/// and must be specified in [`SessionDescriptor::options`]. And
+/// some options are for the pass-through compiler
+/// and must be specified in [`TargetDescriptor::options`].
+///
+/// [`SessionDescriptor::options`]: crate::SessionDescriptor::options
+/// [`TargetDescriptor::options`]: crate::SessionDescriptor::options
 #[derive(Default)]
 pub struct CompilerOptions {
     pub(crate) strings: Vec<CString>,

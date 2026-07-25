@@ -17,6 +17,10 @@ use crate::sys::{
 };
 use crate::{CompilerPaths, GlobalSession, com};
 
+/// A global Slang compiler context.
+///
+/// It contains a handle to the loaded dynamic library
+/// and a diagnostics writer.
 #[derive(Clone)]
 pub struct SlangContext {
     pub(crate) vtable: Rc<SlangVtable>,
@@ -24,6 +28,7 @@ pub struct SlangContext {
 }
 
 impl SlangContext {
+    /// Tries to load a `slang-compiler` dynamic library.
     pub fn new(slang_path: impl AsRef<Path>) -> Result<Self> {
         let library = unsafe { libloading::Library::new(slang_path.as_ref()) }
             .context("failed to open Slang compiler library")?;
@@ -31,6 +36,8 @@ impl SlangContext {
         Self::from_library(library)
     }
 
+    /// Tries to load function definitions from the specified
+    /// `slang-compiler` dynamic library.
     pub fn from_library(library: Library) -> Result<Self> {
         Ok(Self {
             vtable: Rc::new(SlangVtable::new(library)?),
@@ -42,6 +49,9 @@ impl SlangContext {
         GlobalSession::new(self.clone(), paths)
     }
 
+    /// Replaces the diagnostics writer.
+    ///
+    /// [`std::io::sink()`] is used by default.
     pub fn set_diagnostics_writer<T>(&self, writer: T)
     where
         T: std::io::Write + 'static,

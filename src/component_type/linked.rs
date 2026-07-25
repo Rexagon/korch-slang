@@ -2,6 +2,7 @@ use anyhow::{Context, Result};
 
 use crate::{AsBoxedComponentType, BoxedComponentTypeRef, SlangContext, com};
 
+/// A typed representation of successfully linked component types.
 #[derive(Clone)]
 pub struct LinkedModule {
     pub(crate) inner: com::IComponentType,
@@ -10,6 +11,12 @@ pub struct LinkedModule {
 }
 
 impl LinkedModule {
+    /// Compiles all entry points into a single blob.
+    ///
+    /// The `target_index` is the target's index in
+    /// [`SessionDescriptor::targets`].
+    ///
+    /// [`SessionDescriptor::targets`]: crate::SessionDescriptor::targets
     pub fn get_target_code(&self, target_index: usize) -> Result<Vec<u8>> {
         anyhow::ensure!(target_index <= i64::MAX as usize, "invalid target index");
 
@@ -29,6 +36,12 @@ impl LinkedModule {
         Ok(code.to_vec())
     }
 
+    /// Compiles the specified entry point into a blob.
+    ///
+    /// The `target_index` is the target's index in
+    /// [`SessionDescriptor::targets`].
+    ///
+    /// [`SessionDescriptor::targets`]: crate::SessionDescriptor::targets
     pub fn get_entry_point_code(
         &self,
         entry_point_index: usize,

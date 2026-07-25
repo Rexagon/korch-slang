@@ -2,12 +2,19 @@ use anyhow::{Context, Result};
 
 use crate::{AsBoxedComponentType, BoxedComponentTypeRef, Session, SlangContext, TypeLayout, com};
 
+/// Arguments for [`Session::create_type_conformance`].
 pub struct TypeConformanceDescriptor<'a> {
+    /// An interface type.
     pub interface: TypeLayout<'a>,
+    /// A concrete type that implements the specified interface.
     pub ty: TypeLayout<'a>,
+    /// The preferred enumeration value for the type conformance,
+    /// used in dynamic dispatch. Specifying `None` permits Slang
+    /// to choose a default value.
     pub override_id: Option<u64>,
 }
 
+/// A type's conformance to an interface.
 pub struct TypeConformance {
     pub(crate) inner: com::ITypeConformance,
     pub(crate) session: com::ISession,

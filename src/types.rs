@@ -1,9 +1,11 @@
 use crate::sys;
 
 macro_rules! define_enum {
-    ($name:ident : $name_native:ty, {
+    ($(#[$meta:meta])*
+        $name:ident : $name_native:ty, {
         $($variant:ident = $native:ident),*$(,)?
     }) => {
+        $(#[$meta])*
         #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
         #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
         pub enum $name {
@@ -34,7 +36,9 @@ macro_rules! define_enum {
 
 // === Type ===
 
-define_enum!(TypeKind : sys::SlangTypeKind, {
+define_enum!(
+    /// A kind of type.
+    TypeKind : sys::SlangTypeKind, {
     None = SlangTypeKind_SLANG_TYPE_KIND_NONE,
     Struct = SlangTypeKind_SLANG_TYPE_KIND_STRUCT,
     Array = SlangTypeKind_SLANG_TYPE_KIND_ARRAY,
@@ -60,6 +64,7 @@ define_enum!(TypeKind : sys::SlangTypeKind, {
 
 // === Diagnostic Color ===
 
+/// The color mode for rich diagnostics.
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum DiagnosticColor {
@@ -82,13 +87,20 @@ impl From<DiagnosticColor> for sys::SlangDiagnosticColor {
 
 // === Optimization Level ===
 
+/// The target code optimization level.
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum OptimizationLevel {
+    /// Don't optimize at all.
     None,
+    /// Default optimization level: balance code quality
+    /// and compilation time.
     #[default]
     Default,
+    /// Optimize aggressively.
     High,
+    /// Include optimizations that may take a very long
+    /// time, or may involve severe space-vs-speed tradeoffs.
     Maximal,
 }
 
@@ -106,14 +118,21 @@ impl From<OptimizationLevel> for sys::SlangOptimizationLevel {
 
 // === Line Directive Mode ===
 
+/// The line directive mode for output source code.
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum LineDirectiveMode {
+    /// Default behavior: pick behavior base on target.
     #[default]
     Default,
+    /// Don't emit line directives at all.
     None,
+    /// Emit standard C-style `#line` directives.
     Standard,
-    Glsl,
+    /// Emit GLSL-style directives with file *number* instead of name.
+    GLSL,
+    /// Use a source map to track line mappings
+    /// (ie no #line will appear in emitting source).
     SourceMap,
 }
 
@@ -126,7 +145,7 @@ impl From<LineDirectiveMode> for sys::SlangLineDirectiveMode {
             LineDirectiveMode::Standard => {
                 SlangLineDirectiveMode_SLANG_LINE_DIRECTIVE_MODE_STANDARD
             }
-            LineDirectiveMode::Glsl => SlangLineDirectiveMode_SLANG_LINE_DIRECTIVE_MODE_GLSL,
+            LineDirectiveMode::GLSL => SlangLineDirectiveMode_SLANG_LINE_DIRECTIVE_MODE_GLSL,
             LineDirectiveMode::SourceMap => {
                 SlangLineDirectiveMode_SLANG_LINE_DIRECTIVE_MODE_SOURCE_MAP
             }
@@ -136,13 +155,20 @@ impl From<LineDirectiveMode> for sys::SlangLineDirectiveMode {
 
 // === Debug Info Level ===
 
+/// The shader debug information level.
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum DebugInfoLevel {
+    /// Don't emit debug information at all.
     None,
+    /// Emit as little debug information as possible,
+    /// while still supporting stack trackers.
     Minimal,
+    /// Emit whatever is the standard level of debug
+    /// information for each target.
     #[default]
     Standard,
+    /// Emit as much debug information as possible for each target.
     Maximal,
 }
 
@@ -160,6 +186,7 @@ impl From<DebugInfoLevel> for sys::SlangDebugInfoLevel {
 
 // === FP Mode ===
 
+/// The mode to use for floating-point operations on the target.
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum FloatingPointMode {
@@ -182,6 +209,7 @@ impl From<FloatingPointMode> for sys::SlangFloatingPointMode {
 
 // === Matrix Mode ===
 
+/// The layout to assume for variables with matrix types.
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum MatrixLayoutMode {
@@ -202,6 +230,7 @@ impl From<MatrixLayoutMode> for sys::SlangMatrixLayoutMode {
 
 // === Target Stuff ===
 
+/// The target format to generate code for.
 #[derive(Debug, Clone, Copy)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum CompileTarget {
@@ -226,6 +255,7 @@ impl From<CompileTarget> for sys::SlangCompileTarget {
     }
 }
 
+/// An underlying compiler.
 #[derive(Debug, Clone, Copy)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum PassThrough {
@@ -243,16 +273,19 @@ impl From<PassThrough> for sys::SlangPassThrough {
     }
 }
 
+/// The internal ID of a target profile.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(transparent)]
 pub struct ProfileId(pub(crate) u32);
 
+/// The internal ID of a capability.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(transparent)]
 pub struct CapabilityID(pub(crate) u32);
 
 // === Language ===
 
+/// The language of a source file.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum SourceLanguage {
@@ -276,7 +309,9 @@ impl From<SourceLanguage> for sys::SlangSourceLanguage {
 
 // === Shader Stage ===
 
-define_enum!(Stage : sys::SlangStage, {
+define_enum!(
+    /// A shader stage.
+    Stage : sys::SlangStage, {
     Vertex = SlangStage_SLANG_STAGE_VERTEX,
     Hull = SlangStage_SLANG_STAGE_HULL,
     Domain = SlangStage_SLANG_STAGE_DOMAIN,

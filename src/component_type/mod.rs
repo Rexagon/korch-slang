@@ -15,9 +15,12 @@ mod entry_point;
 mod linked;
 mod module;
 
+/// A common interface for component types.
 pub trait AsBoxedComponentType {
+    /// Downcasts the component type to a base reference.
     fn as_boxed(&self) -> BoxedComponentTypeRef<'_>;
 
+    /// Downcasts the component type into a base type.
     fn into_boxed(self) -> BoxedComponentType
     where
         Self: Sized,
@@ -30,6 +33,7 @@ pub trait AsBoxedComponentType {
         }
     }
 
+    /// Links the component type, ensuring that the composed program has no missing dependencies.
     fn link(&self) -> Result<LinkedModule> {
         let boxed = self.as_boxed();
 
@@ -105,6 +109,53 @@ pub trait AsBoxedComponentType {
     }
 }
 
+/// A component type is a unit of shader code layout, reflection, and linking.
+///
+/// A component type is a unit of shader code that can be included into
+/// a linked and compiled shader program. Each component type may have:
+///
+/// - Zero or more uniform shader parameters, representing textures,
+///   buffers, etc. that the code in the component depends on.
+/// - Zero or more *specialization* parameters, which are type or
+///   value parameters that can be used to synthesize specialized
+///   versions of the component type.
+/// - Zero or more entry points, which are the individually invocable
+///   kernels that can have final code generated.
+/// - Zero or more *requirements*, which are other component
+///   types on which the component type depends.
+///
+/// One example of a component type is a module of Slang code:
+///
+/// - The global-scope shader parameters declared in the module are
+///   the parameters when considered as a component type.
+/// - Any global-scope generic or interface type parameters introduce
+///   specialization parameters for the module.
+/// - A module does not by default include any entry points when
+///   considered as a component type (although the code of the
+///   module might *declare* some entry points).
+/// - Any other modules that are `import`ed in the source code
+///   become requirements of the module, when considered as a
+///   component type.
+///
+/// An entry point is another example of a component type:
+///
+/// - The `uniform` parameters of the entry point function are
+///   its shader parameters when considered as a component type.
+/// - Any generic or interface-type parameters of the entry point
+///   introduce specialization parameters.
+/// - An entry point component type exposes a single entry point (itself).
+///   An entry point has one requirement for the module in which
+///   it was defined.
+///
+/// Component types can be manipulated in a few ways:
+///
+/// - Multiple component types can be combined into a composite, which
+///   combines all of their code, parameters, etc.
+/// - A component type can be specialized, by "plugging in" types and
+///   values for its specialization parameters.
+/// - A component type can be laid out for a particular target, giving
+///   offsets/bindings to the shader parameters it contains.
+/// - Generated kernel code can be requested for entry points.
 #[derive(Clone)]
 pub struct BoxedComponentType {
     pub(crate) inner: com::IComponentType,
@@ -132,6 +183,7 @@ impl AsRef<com::IComponentType> for BoxedComponentType {
     }
 }
 
+/// A non-owning version of [`BoxedComponentType`].
 #[derive(Clone)]
 pub struct BoxedComponentTypeRef<'a> {
     pub(crate) inner: &'a com::IComponentType,
@@ -157,6 +209,7 @@ impl AsRef<com::IComponentType> for BoxedComponentTypeRef<'_> {
 
 // === Specialization ===
 
+/// A specialization argument for [`AsBoxedComponentType::specialize`].
 pub enum SpecializationArg<'a> {
     Type(TypeLayout<'a>),
     Expr(Cow<'a, str>),
@@ -164,6 +217,7 @@ pub enum SpecializationArg<'a> {
 
 // === Reflection ===
 
+/// Component layout reflection.
 #[derive(Clone)]
 pub struct ComponentLayout<'a> {
     pub(crate) parent: &'a com::IComponentType,
@@ -200,6 +254,7 @@ impl<'a> ComponentLayout<'a> {
     }
 }
 
+/// Entry point layout reflection.
 #[derive(Clone)]
 pub struct EntryPointLayout<'a> {
     #[expect(unused)]
@@ -223,6 +278,7 @@ impl EntryPointLayout<'_> {
     }
 }
 
+/// Type layout reflection.
 #[derive(Clone)]
 pub struct TypeLayout<'a> {
     #[expect(unused)]
@@ -240,6 +296,7 @@ impl TypeLayout<'_> {
 
 // === Iter ===
 
+/// An iterator over entry points in [`ComponentLayout`].
 #[derive(Clone)]
 pub struct EntryPointsLayoutIter<'a, 'c> {
     layout: &'a ComponentLayout<'c>,

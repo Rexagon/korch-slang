@@ -12,6 +12,16 @@ use crate::{
     TypeConformanceDescriptor, com, sys,
 };
 
+/// A global session for interaction with the Slang library.
+///
+/// An application may create and re-use a single global session across
+/// multiple sessions, in order to amortize startups costs (in current
+/// Slang this is mostly the cost of loading the Slang standard library).
+///
+/// A single global session object is currently *not* thread-safe. Unless
+/// documented otherwise, a global session and the objects created from it
+/// should be externally synchronized when shared across threads. Distinct
+/// global sessions may be used from different threads in parallel.
 pub struct GlobalSession {
     inner: com::IGlobalSession,
     ctx: SlangContext,
@@ -81,22 +91,58 @@ impl GlobalSession {
 
 // === Session ===
 
+/// Arguments for [`GlobalSession::create_session`].
 #[derive(Default)]
 pub struct SessionDescriptor<'a, 's, 'v> {
+    /// Search paths used to resolve files referenced by `#include` or `import`.
     pub search_paths: &'a [PathBuf],
+    /// Code generation targets to include in the session.
     pub targets: &'a [TargetDescriptor],
+    /// A list of pre-defined macros.
     pub preprocessor_macros: &'a [(&'s str, Cow<'v, str>)],
+    /// Default layout to assume for variables with matrix types..
     pub default_matrix_layout_mode: MatrixLayoutMode,
+    /// A set of compiler options.
     pub options: CompilerOptions,
 }
 
+/// A code generation target description.
 #[derive(Debug)]
 pub struct TargetDescriptor {
+    /// The target format to generate code for (e.g., SPIR-V, DXIL, etc.).
     pub format: CompileTarget,
+    /// The compilation profile supported by the target.
+    ///
+    /// The profile can be requested via [`GlobalSession::find_profile`].
     pub profile: ProfileId,
+    /// A set of compiler options.
     pub options: CompilerOptions,
 }
 
+/// A session provides a scope for code that is loaded.
+///
+/// A session can be used to load modules of Slang source code
+/// and to request target-specific compiled binaries and layout
+/// information.
+///
+/// In order to be able to load code, the session owns a set
+/// of active "search paths" for resolving `#include` directives
+/// and `import` declarations, as well as a set of global
+/// preprocessor definitions that will be used for all code
+/// that gets `import`ed in the session.
+///
+/// If multiple user shaders are loaded in the same session
+/// and import the same module (e.g., two source files do `import X`),
+/// then there will only be one copy of `X` loaded within the session.
+///
+/// In order to be able to generate target code, the session
+/// owns a list of available compilation targets, which specify
+/// code generation options.
+///
+/// Code loaded and compiled within a session is owned by the session
+/// and will remain resident in memory until the session is released.
+/// Applications wishing to control the memory usage for compiled
+/// and loaded code should use multiple sessions.
 #[derive(Clone)]
 pub struct Session {
     pub(crate) inner: com::ISession,
