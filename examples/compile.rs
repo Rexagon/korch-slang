@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 use anyhow::{Context, Result};
 use korch_slang::{
     AsBoxedComponentType, CompileTarget, CompilerPaths, PassThrough, SessionDescriptor,
-    SlangContext, TargetDescriptor,
+    SlangContext, SpecializationArg, TargetDescriptor,
 };
 
 struct Config {
@@ -13,7 +13,6 @@ struct Config {
 }
 
 fn main() -> Result<()> {
-    #[cfg(feature = "env_logger")]
     env_logger::init();
 
     compile_shader(Config {
@@ -64,8 +63,15 @@ fn compile_shader(config: Config) -> Result<()> {
         println!("entry_point: {}", entry_point.get_name()?);
         println!("stage: {:?}", entry_point.get_stage()?);
 
+        let layout = module.get_layout()?;
+        let high_quality = layout.find_type("HighQuality").context("no type")?;
+
+        let specialized = entry_point
+            .specialize(&[SpecializationArg::Type(high_quality)])
+            .context("failed to specialize entry point")?;
+
         let linked = session
-            .combine_composite_types([module.as_boxed(), entry_point.as_boxed()])
+            .combine_component_types([module.as_boxed(), specialized.as_boxed()])
             .context("failed to combine component types")?
             .link()
             .context("failed to link component types")?;

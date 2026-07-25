@@ -1,6 +1,5 @@
 use anyhow::{Context, Result};
 
-use super::get_raw_layout;
 use crate::util::from_ffi_string;
 use crate::{AsBoxedComponentType, BoxedComponentTypeRef, SlangContext, Stage, com};
 
@@ -21,12 +20,14 @@ impl EntryPoint {
     }
 
     pub fn get_stage(&self) -> Result<Stage> {
-        let layout = get_raw_layout(&self.inner, &self.ctx)?.as_ptr();
-        let vtable = self.ctx.vtable.as_ref();
-        let entry_point_count = unsafe { (vtable.reflection_get_entry_point_count)(layout) };
+        let layout = self.get_layout()?;
+        let entry_point_count = layout.entry_point_count();
         anyhow::ensure!(entry_point_count == 1, "invalid component layout");
 
-        let entry_point = unsafe { (vtable.reflection_get_entry_point_by_index)(layout, 0) };
+        let vtable = self.ctx.vtable.as_ref();
+
+        let entry_point =
+            unsafe { (vtable.reflection_get_entry_point_by_index)(layout.inner.as_ptr(), 0) };
         let stage = unsafe { (vtable.reflection_entry_point_get_stage)(entry_point) };
         Stage::from_slang(stage).context("unknown stage")
     }
@@ -35,7 +36,7 @@ impl EntryPoint {
 impl AsBoxedComponentType for EntryPoint {
     fn as_boxed(&self) -> BoxedComponentTypeRef<'_> {
         BoxedComponentTypeRef {
-            inner: &*self.inner,
+            inner: &self.inner,
             ctx: &self.ctx,
         }
     }

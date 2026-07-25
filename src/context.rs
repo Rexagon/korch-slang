@@ -11,7 +11,8 @@ use libloading::os::windows::Symbol;
 use windows_core::HRESULT;
 
 use crate::sys::{
-    SlangProgramLayout, SlangReflectionEntryPoint, SlangStage, SlangUInt, slang_FunctionReflection,
+    SlangProgramLayout, SlangReflectionEntryPoint, SlangReflectionType, SlangStage, SlangTypeKind,
+    SlangUInt, slang_FunctionReflection,
 };
 use crate::{CompilerPaths, GlobalSession, com};
 
@@ -106,6 +107,10 @@ define_vtable!(SlangVtable, {
         name: "spReflection_getEntryPointByIndex",
         ty: unsafe extern "C" fn(*mut SlangProgramLayout, SlangUInt) -> *mut SlangReflectionEntryPoint,
     },
+    reflection_find_type_by_name: {
+        name: "spReflection_FindTypeByName",
+        ty: unsafe extern "C" fn(*mut SlangProgramLayout, *const c_char) -> *mut SlangReflectionType,
+    },
     reflection_fn_get_name: {
         name: "spReflectionFunction_GetName",
         ty: unsafe extern "C" fn(*mut slang_FunctionReflection) -> *const c_char,
@@ -117,5 +122,9 @@ define_vtable!(SlangVtable, {
     reflection_entry_point_get_stage: {
         name: "spReflectionEntryPoint_getStage",
         ty: unsafe extern "C" fn(*mut SlangReflectionEntryPoint) -> SlangStage,
-    }
+    },
+    reflection_type_get_kind: {
+        name: "spReflectionType_GetKind",
+        ty: unsafe extern "C" fn(*mut SlangReflectionType) -> SlangTypeKind,
+    },
 });

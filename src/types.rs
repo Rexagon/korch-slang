@@ -1,5 +1,62 @@
 use crate::sys;
 
+macro_rules! define_enum {
+    ($name:ident : $name_native:ty, {
+        $($variant:ident = $native:ident),*$(,)?
+    }) => {
+        #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+        pub enum $name {
+            $($variant,)*
+        }
+
+        #[allow(non_upper_case_globals)]
+        impl $name {
+            pub(crate) fn from_slang(value: $name_native) -> Option<Self> {
+                use sys::*;
+                Some(match value {
+                    $($native => Self::$variant,)*
+                    _ => return None,
+                })
+            }
+        }
+
+        impl From<$name> for $name_native {
+            fn from(value: $name) -> Self {
+                use sys::*;
+                match value {
+                    $($name::$variant => $native,)*
+                }
+            }
+        }
+    };
+}
+
+// === Type ===
+
+define_enum!(TypeKind : sys::SlangTypeKind, {
+    None = SlangTypeKind_SLANG_TYPE_KIND_NONE,
+    Struct = SlangTypeKind_SLANG_TYPE_KIND_STRUCT,
+    Array = SlangTypeKind_SLANG_TYPE_KIND_ARRAY,
+    Matrix = SlangTypeKind_SLANG_TYPE_KIND_MATRIX,
+    Vector = SlangTypeKind_SLANG_TYPE_KIND_VECTOR,
+    Scalar = SlangTypeKind_SLANG_TYPE_KIND_SCALAR,
+    ConstantBuffer = SlangTypeKind_SLANG_TYPE_KIND_CONSTANT_BUFFER,
+    Resource = SlangTypeKind_SLANG_TYPE_KIND_RESOURCE,
+    SamplerState = SlangTypeKind_SLANG_TYPE_KIND_SAMPLER_STATE,
+    TextureBuffer = SlangTypeKind_SLANG_TYPE_KIND_TEXTURE_BUFFER,
+    ShaderStorageBuffer = SlangTypeKind_SLANG_TYPE_KIND_SHADER_STORAGE_BUFFER,
+    ParameterBlock = SlangTypeKind_SLANG_TYPE_KIND_PARAMETER_BLOCK,
+    GenericTypeParameter = SlangTypeKind_SLANG_TYPE_KIND_GENERIC_TYPE_PARAMETER,
+    Interface = SlangTypeKind_SLANG_TYPE_KIND_INTERFACE,
+    OutputStream = SlangTypeKind_SLANG_TYPE_KIND_OUTPUT_STREAM,
+    MeshOutput = SlangTypeKind_SLANG_TYPE_KIND_MESH_OUTPUT,
+    Specialized = SlangTypeKind_SLANG_TYPE_KIND_SPECIALIZED,
+    Feedback = SlangTypeKind_SLANG_TYPE_KIND_FEEDBACK,
+    Pointer = SlangTypeKind_SLANG_TYPE_KIND_POINTER,
+    DynamicResource = SlangTypeKind_SLANG_TYPE_KIND_DYNAMIC_RESOURCE,
+    Enum = SlangTypeKind_SLANG_TYPE_KIND_ENUM,
+});
+
 // === Matrix Mode ===
 
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
@@ -71,37 +128,6 @@ impl From<SourceLanguage> for sys::SlangSourceLanguage {
 }
 
 // === Shader Stage ===
-
-macro_rules! define_enum {
-    ($name:ident : $name_native:ty, {
-        $($variant:ident = $native:ident),*$(,)?
-    }) => {
-        #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-        pub enum $name {
-            $($variant,)*
-        }
-
-        #[allow(non_upper_case_globals)]
-        impl $name {
-            pub(crate) fn from_slang(value: $name_native) -> Option<Self> {
-                use sys::*;
-                Some(match value {
-                    $($native => Self::$variant,)*
-                    _ => return None,
-                })
-            }
-        }
-
-        impl From<$name> for $name_native {
-            fn from(value: $name) -> Self {
-                use sys::*;
-                match value {
-                    $($name::$variant => $native,)*
-                }
-            }
-        }
-    };
-}
 
 define_enum!(Stage : sys::SlangStage, {
     Vertex = SlangStage_SLANG_STAGE_VERTEX,

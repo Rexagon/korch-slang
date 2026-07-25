@@ -79,12 +79,26 @@ impl Module {
             ctx: self.ctx.clone(),
         })
     }
+
+    pub fn find_entry_point(&self, name: &str) -> Option<EntryPoint> {
+        let name = to_ffi_string(name).ok()?;
+        let mut entry_point = None;
+        unsafe {
+            self.inner
+                .findEntryPointByName(name.as_ptr(), &mut entry_point)
+                .ok()?
+        };
+        entry_point.map(|inner| EntryPoint {
+            inner,
+            ctx: self.ctx.clone(),
+        })
+    }
 }
 
 impl AsBoxedComponentType for Module {
     fn as_boxed(&self) -> BoxedComponentTypeRef<'_> {
         BoxedComponentTypeRef {
-            inner: &*self.inner,
+            inner: &self.inner,
             ctx: &self.ctx,
         }
     }

@@ -1,6 +1,5 @@
 use anyhow::{Context, Result};
 
-use super::get_raw_layout;
 use crate::{AsBoxedComponentType, BoxedComponentTypeRef, SlangContext, com};
 
 #[derive(Clone)]
@@ -10,7 +9,23 @@ pub struct LinkedModule {
 }
 
 impl LinkedModule {
-    // TODO: Check entrypoints.
+    pub fn get_target_code(&self, target_index: usize) -> Result<Vec<u8>> {
+        anyhow::ensure!(target_index <= i64::MAX as usize, "invalid target index");
+
+        let mut diagnostics = None;
+        let mut code = None;
+        unsafe {
+            self.inner
+                .getTargetCode(target_index as i64, &mut code, &mut diagnostics)?;
+        }
+        self.ctx.log_diagnostics(diagnostics);
+        let code = code.context("code was not created")?;
+        let code = unsafe {
+            std::slice::from_raw_parts(code.getBufferPointer().cast::<u8>(), code.getBufferSize())
+        };
+        Ok(code.to_vec())
+    }
+
     pub fn get_entry_point_code(
         &self,
         entry_point_index: usize,
@@ -22,11 +37,10 @@ impl LinkedModule {
         );
         anyhow::ensure!(target_index <= i64::MAX as usize, "invalid target index");
 
-        let layout = get_raw_layout(&self.inner, &self.ctx)?.as_ptr();
-        let vtable = self.ctx.vtable.as_ref();
-        let entry_point_count = unsafe { (vtable.reflection_get_entry_point_count)(layout) };
+        let layout = self.get_layout()?;
+        let entry_point_count = layout.entry_point_count();
         anyhow::ensure!(
-            (entry_point_index as u64) < entry_point_count,
+            entry_point_index < entry_point_count,
             "entry point index is out of range (component type has \
             {entry_point_count} entry points)",
         );
@@ -40,7 +54,7 @@ impl LinkedModule {
                 &mut code,
                 &mut diagnostics,
             )?;
-        };
+        }
         self.ctx.log_diagnostics(diagnostics);
         let code = code.context("code was not created")?;
         let code = unsafe {

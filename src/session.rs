@@ -178,7 +178,7 @@ impl Session {
         Module::new(self, name, path, source.into())
     }
 
-    pub fn combine_composite_types<'a, I, T>(&self, items: I) -> Result<BoxedComponentType>
+    pub fn combine_component_types<'a, I, T>(&self, items: I) -> Result<BoxedComponentType>
     where
         I: IntoIterator<Item = T, IntoIter: 'a>,
         T: AsBoxedComponentType + 'a,
