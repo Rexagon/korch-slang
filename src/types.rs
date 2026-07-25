@@ -80,12 +80,14 @@ impl From<MatrixLayoutMode> for sys::SlangMatrixLayoutMode {
 
 #[derive(Debug, Clone, Copy)]
 pub enum CompileTarget {
+    HLSL,
     DXIL,
 }
 
 impl From<CompileTarget> for sys::SlangCompileTarget {
     fn from(value: CompileTarget) -> Self {
         match value {
+            CompileTarget::HLSL => sys::SlangCompileTarget_SLANG_HLSL,
             CompileTarget::DXIL => sys::SlangCompileTarget_SLANG_DXIL,
         }
     }

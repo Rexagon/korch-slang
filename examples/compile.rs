@@ -44,10 +44,16 @@ fn compile_shader(config: Config) -> Result<()> {
     let session = global_session
         .create_session(&SessionDescriptor {
             search_paths: &[],
-            targets: &[TargetDescriptor {
-                format: CompileTarget::DXIL,
-                profile,
-            }],
+            targets: &[
+                TargetDescriptor {
+                    format: CompileTarget::DXIL,
+                    profile,
+                },
+                TargetDescriptor {
+                    format: CompileTarget::HLSL,
+                    profile,
+                },
+            ],
             preprocessor_macros: &[],
             ..Default::default()
         })
@@ -92,6 +98,12 @@ fn compile_shader(config: Config) -> Result<()> {
             .get_entry_point_code(0, 0)
             .context("failed to compile entry code")?;
         println!("compiled {} bytes", compiled.len());
+
+        let hlsl_code = linked
+            .get_entry_point_code(0, 1)
+            .context("failed to compile to HLSL")?;
+        let hlsl_code = String::from_utf8(hlsl_code).context("invalid HLSL code")?;
+        println!("----\n{hlsl_code}");
     }
 
     Ok(())
