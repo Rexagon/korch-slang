@@ -34,8 +34,10 @@ pub trait AsBoxedComponentType {
 
         let mut linked = None;
         let mut diagnostics = None;
-        unsafe { boxed.inner.link(&mut linked, &mut diagnostics)? };
+        let result = unsafe { boxed.inner.link(&mut linked, &mut diagnostics) };
         boxed.ctx.log_diagnostics(diagnostics);
+        result?;
+
         Ok(LinkedModule {
             inner: linked.context("components were not linked")?,
             ctx: boxed.ctx.clone(),
@@ -69,15 +71,17 @@ pub trait AsBoxedComponentType {
 
         let mut specialized = None;
         let mut diagnostics = None;
-        unsafe {
+        let result = unsafe {
             boxed.inner.specialize(
                 specialization_args.as_ptr(),
                 specialization_args.len() as _,
                 &mut specialized,
                 &mut diagnostics,
-            )?
+            )
         };
         boxed.ctx.log_diagnostics(diagnostics);
+        result?;
+
         Ok(BoxedComponentType {
             inner: specialized.context("component was not specialized")?,
             ctx: boxed.ctx.clone(),

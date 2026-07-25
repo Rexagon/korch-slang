@@ -197,15 +197,16 @@ impl Session {
 
         let mut diagnostics = None;
         let mut composite_type = None;
-        unsafe {
+        let result = unsafe {
             self.inner.createCompositeComponentType(
                 component_types.as_ptr().cast(),
                 component_types.len() as _,
                 &mut composite_type,
                 &mut diagnostics,
-            )?;
-        }
+            )
+        };
         self.ctx.log_diagnostics(diagnostics);
+        result?;
 
         Ok(BoxedComponentType {
             inner: composite_type.context("composite context type was not created")?,
@@ -227,16 +228,17 @@ impl Session {
 
         let mut diagnostics = None;
         let mut conformance = None;
-        unsafe {
+        let result = unsafe {
             self.inner.createTypeConformanceComponentType(
                 desc.ty.inner.as_ptr(),
                 desc.interface.inner.as_ptr(),
                 &mut conformance,
                 override_id,
                 &mut diagnostics,
-            )?;
-        }
+            )
+        };
         self.ctx.log_diagnostics(diagnostics);
+        result?;
 
         Ok(TypeConformance {
             inner: conformance.context("type conformance was not created")?,

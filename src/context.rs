@@ -123,6 +123,10 @@ define_vtable!(SlangVtable, {
         name: "spReflectionEntryPoint_getStage",
         ty: unsafe extern "C" fn(*mut SlangReflectionEntryPoint) -> SlangStage,
     },
+    reflection_entry_point_get_thread_group_size: {
+        name: "spReflectionEntryPoint_getComputeThreadGroupSize",
+        ty: unsafe extern "C" fn(*mut SlangReflectionEntryPoint, SlangUInt, *mut SlangUInt),
+    },
     reflection_type_get_kind: {
         name: "spReflectionType_GetKind",
         ty: unsafe extern "C" fn(*mut SlangReflectionType) -> SlangTypeKind,

@@ -68,6 +68,7 @@ fn compile_shader(config: Config) -> Result<()> {
     for entry_point in module.entry_points_iter() {
         println!("entry_point: {}", entry_point.get_name()?);
         println!("stage: {:?}", entry_point.get_stage()?);
+        println!("thread_group: {:?}", entry_point.get_compute_thread_size()?);
 
         let layout = module.get_layout()?;
         let high_quality = layout.find_type("HighQuality").context("no type")?;

@@ -1,7 +1,7 @@
 use anyhow::{Context, Result};
 
 use crate::util::from_ffi_string;
-use crate::{AsBoxedComponentType, BoxedComponentTypeRef, SlangContext, Stage, com};
+use crate::{AsBoxedComponentType, BoxedComponentTypeRef, SlangContext, Stage, com, sys};
 
 #[derive(Clone)]
 pub struct EntryPoint {
@@ -20,16 +20,33 @@ impl EntryPoint {
     }
 
     pub fn get_stage(&self) -> Result<Stage> {
+        let entry_point = self.get_entry_point_layout()?;
+        let stage = unsafe { (self.ctx.vtable.reflection_entry_point_get_stage)(entry_point) };
+        Stage::from_slang(stage).context("unknown stage")
+    }
+
+    pub fn get_compute_thread_size(&self) -> Result<(u64, u64, u64)> {
+        let entry_point = self.get_entry_point_layout()?;
+        let mut size = [1u64; 3];
+        unsafe {
+            (self.ctx.vtable.reflection_entry_point_get_thread_group_size)(
+                entry_point,
+                3,
+                size.as_mut_ptr(),
+            )
+        };
+        let [x, y, z] = size;
+        Ok((x, y, z))
+    }
+
+    fn get_entry_point_layout(&self) -> Result<*mut sys::SlangEntryPointLayout> {
         let layout = self.get_layout()?;
         let entry_point_count = layout.entry_point_count();
         anyhow::ensure!(entry_point_count == 1, "invalid component layout");
 
-        let vtable = self.ctx.vtable.as_ref();
-
-        let entry_point =
-            unsafe { (vtable.reflection_get_entry_point_by_index)(layout.inner.as_ptr(), 0) };
-        let stage = unsafe { (vtable.reflection_entry_point_get_stage)(entry_point) };
-        Stage::from_slang(stage).context("unknown stage")
+        Ok(unsafe {
+            (self.ctx.vtable.reflection_get_entry_point_by_index)(layout.inner.as_ptr(), 0)
+        })
     }
 }
 

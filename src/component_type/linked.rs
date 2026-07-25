@@ -14,11 +14,13 @@ impl LinkedModule {
 
         let mut diagnostics = None;
         let mut code = None;
-        unsafe {
+        let result = unsafe {
             self.inner
-                .getTargetCode(target_index as i64, &mut code, &mut diagnostics)?;
-        }
+                .getTargetCode(target_index as i64, &mut code, &mut diagnostics)
+        };
         self.ctx.log_diagnostics(diagnostics);
+        result?;
+
         let code = code.context("code was not created")?;
         let code = unsafe {
             std::slice::from_raw_parts(code.getBufferPointer().cast::<u8>(), code.getBufferSize())
@@ -47,15 +49,17 @@ impl LinkedModule {
 
         let mut diagnostics = None;
         let mut code = None;
-        unsafe {
+        let result = unsafe {
             self.inner.getEntryPointCode(
                 entry_point_index as i64,
                 target_index as i64,
                 &mut code,
                 &mut diagnostics,
-            )?;
-        }
+            )
+        };
         self.ctx.log_diagnostics(diagnostics);
+        result?;
+
         let code = code.context("code was not created")?;
         let code = unsafe {
             std::slice::from_raw_parts(code.getBufferPointer().cast::<u8>(), code.getBufferSize())

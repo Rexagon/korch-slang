@@ -24,7 +24,7 @@ struct LowQuality : IQuality
 uniform uint dynamicSelector;
 
 [shader("compute")]
-[numthreads(1, 1, 1)]
+[numthreads(4, 2, 1)]
 void computeMain<T : IQuality>(uint3 threadId: SV_DispatchThreadID)
 {
     uint index = threadId.x;
@@ -32,4 +32,10 @@ void computeMain<T : IQuality>(uint3 threadId: SV_DispatchThreadID)
 
     var dynamic = createDynamicObject<IQuality>(dynamicSelector, 0);
     result[index] += dynamic.getValue();
+}
+
+[shader("vertex")]
+float4 vertexMain<T : IQuality>(uint vertexID: SV_VertexID) : SV_Position
+{
+    return float4(vertexID, 0.0, 0.0, 1.0);
 }
