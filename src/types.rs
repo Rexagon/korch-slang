@@ -197,15 +197,23 @@ impl From<MatrixLayoutMode> for sys::SlangMatrixLayoutMode {
 
 #[derive(Debug, Clone, Copy)]
 pub enum CompileTarget {
+    GLSL,
     HLSL,
+    SpirV,
+    SpirVAsm,
     DXIL,
+    DXILAsm,
 }
 
 impl From<CompileTarget> for sys::SlangCompileTarget {
     fn from(value: CompileTarget) -> Self {
         match value {
+            CompileTarget::GLSL => sys::SlangCompileTarget_SLANG_GLSL,
             CompileTarget::HLSL => sys::SlangCompileTarget_SLANG_HLSL,
+            CompileTarget::SpirV => sys::SlangCompileTarget_SLANG_SPIRV,
+            CompileTarget::SpirVAsm => sys::SlangCompileTarget_SLANG_SPIRV_ASM,
             CompileTarget::DXIL => sys::SlangCompileTarget_SLANG_DXIL,
+            CompileTarget::DXILAsm => sys::SlangCompileTarget_SLANG_DXIL_ASM,
         }
     }
 }
@@ -213,6 +221,7 @@ impl From<CompileTarget> for sys::SlangCompileTarget {
 #[derive(Debug, Clone, Copy)]
 pub enum PassThrough {
     DXC,
+    Glslang,
 }
 
 impl From<PassThrough> for sys::SlangPassThrough {
@@ -220,6 +229,7 @@ impl From<PassThrough> for sys::SlangPassThrough {
         use sys::*;
         match value {
             PassThrough::DXC => SlangPassThrough_SLANG_PASS_THROUGH_DXC,
+            PassThrough::Glslang => SlangPassThrough_SLANG_PASS_THROUGH_GLSLANG,
         }
     }
 }
@@ -238,6 +248,8 @@ pub struct CapabilityID(pub(crate) u32);
 pub enum SourceLanguage {
     Slang,
     HLSL,
+    GLSL,
+    SPRIV,
 }
 
 impl From<SourceLanguage> for sys::SlangSourceLanguage {
@@ -246,6 +258,8 @@ impl From<SourceLanguage> for sys::SlangSourceLanguage {
         match value {
             SourceLanguage::Slang => SlangSourceLanguage_SLANG_SOURCE_LANGUAGE_SLANG,
             SourceLanguage::HLSL => SlangSourceLanguage_SLANG_SOURCE_LANGUAGE_HLSL,
+            SourceLanguage::GLSL => SlangSourceLanguage_SLANG_SOURCE_LANGUAGE_GLSL,
+            SourceLanguage::SPRIV => SlangSourceLanguage_SLANG_SOURCE_LANGUAGE_SPIRV,
         }
     }
 }
