@@ -1,7 +1,12 @@
 [package]
 name = "korch-slang"
+description = "Slang bindings for the Korch game engine."
+repository = "https://github.com/rexagon/korch-slang"
 version = "0.1.0"
 edition = "2024"
+rust-version = "1.95.0"
+include = ["src/**/*.rs", "src/**/*.h", "build.rs", "LICENSE-*", "README.md"]
+license = "MIT OR Apache-2.0"
 
 [[example]]
 name = "compile"
@@ -10,12 +15,18 @@ name = "compile"
 anyhow = "1.0"
 castaway = "0.2.4"
 libloading = "0.9"
-log = "0.4.33"
-scopeguard = "1.2.0"
 windows-core = "0.62.2"
+
+serde = { version = "1.0.229", features = ["derive"], optional = true }
+log = { version = "0.4.33", optional = true }
 
 [dev-dependencies]
 env_logger = "0.11.11"
+log = "0.4.33"
 
 [build-dependencies]
 bindgen = "0.72.1"
+
+[features]
+serde = ["dep:serde"]
+log = ["dep:log"]

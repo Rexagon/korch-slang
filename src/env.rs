@@ -1,7 +1,7 @@
 // === Custom Shared Library Loader ===
 
 use std::ffi::{CStr, OsStr, c_char, c_void};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use libloading::Library;
 use windows_core::{OutRef, implement};
@@ -16,10 +16,19 @@ macro_rules! define_paths {
     ($ident:ident, { $($path:ident = $name:literal),*$(,)? }) => {
         #[derive(Default, Clone)]
         pub struct $ident {
-            $(pub $path: Option<PathBuf>,)*
+            $(pub(crate) $path: Option<PathBuf>,)*
         }
 
         impl $ident {
+            pub fn new() -> Self {
+                Self::default()
+            }
+
+            $(pub fn $path(mut self, path: impl AsRef<Path>) -> Self {
+                self.$path = Some(path.as_ref().to_path_buf());
+                self
+            })*
+
             fn resolve_by_name<'a>(&'a self, path: &'a CStr) -> &'a OsStr {
                 match path.to_bytes() {
                     $($name => {
@@ -59,12 +68,16 @@ impl ISlangSharedLibraryLoader_Impl for CustomSharedLibraryLoader_Impl {
         shared_library_out: OutRef<ISlangSharedLibrary>,
     ) -> windows_core::Result<()> {
         let path = unsafe { CStr::from_ptr(path) };
+
+        #[cfg(feature = "log")]
         log::debug!("library requested: path={:?}", path.to_str());
 
         let path = self.paths.resolve_by_name(path);
         let library = match unsafe { Library::new(path) } {
             Ok(lib) => lib,
+            #[allow(unused)]
             Err(e) => {
+                #[cfg(feature = "log")]
                 log::error!("failed to open library: {e:?}");
                 return Err(windows_core::Error::empty());
             }
@@ -77,6 +90,7 @@ impl ISlangSharedLibraryLoader_Impl for CustomSharedLibraryLoader_Impl {
 
 impl Drop for CustomSharedLibraryLoader {
     fn drop(&mut self) {
+        #[cfg(feature = "log")]
         log::debug!("dropped loader");
     }
 }
@@ -89,11 +103,14 @@ struct CustomSharedLibrary {
 impl ISlangSharedLibrary_Impl for CustomSharedLibrary_Impl {
     unsafe fn findSymbolAddressByName(&self, name: *const c_char) -> *mut c_void {
         let name = unsafe { CStr::from_ptr(name) };
+        #[cfg(feature = "log")]
         log::debug!("symbol address requested: name={:?}", name.to_str());
 
         match unsafe { self.library.get::<unsafe extern "system" fn()>(name) } {
             Ok(symbol) => unsafe { symbol.into_raw() }.as_raw_ptr(),
+            #[allow(unused)]
             Err(e) => {
+                #[cfg(feature = "log")]
                 log::error!("failed to get symbol: name={:?}, {e:?}", name.to_str());
                 std::ptr::null_mut()
             }
@@ -102,7 +119,9 @@ impl ISlangSharedLibrary_Impl for CustomSharedLibrary_Impl {
 }
 
 impl ISlangCastable_Impl for CustomSharedLibrary_Impl {
+    #[allow(unused)]
     unsafe fn castAs(&self, guid: &SlangUUID) -> *mut c_void {
+        #[cfg(feature = "log")]
         log::debug!(
             "cast requested: 0x{:08x} 0x{:04x} 0x{:04x}",
             guid.data1,
@@ -116,6 +135,7 @@ impl ISlangCastable_Impl for CustomSharedLibrary_Impl {
 
 impl Drop for CustomSharedLibrary {
     fn drop(&mut self) {
+        #[cfg(feature = "log")]
         log::debug!("dropped shared library");
     }
 }

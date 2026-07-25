@@ -1,3 +1,4 @@
+use std::cell::RefCell;
 use std::ffi::{c_char, c_void};
 use std::path::Path;
 use std::rc::Rc;
@@ -19,6 +20,7 @@ use crate::{CompilerPaths, GlobalSession, com};
 #[derive(Clone)]
 pub struct SlangContext {
     pub(crate) vtable: Rc<SlangVtable>,
+    pub(crate) writer: Rc<RefCell<Box<dyn std::io::Write>>>,
 }
 
 impl SlangContext {
@@ -32,6 +34,7 @@ impl SlangContext {
     pub fn from_library(library: Library) -> Result<Self> {
         Ok(Self {
             vtable: Rc::new(SlangVtable::new(library)?),
+            writer: Rc::new(RefCell::new(Box::new(std::io::sink()))),
         })
     }
 
@@ -39,7 +42,13 @@ impl SlangContext {
         GlobalSession::new(self.clone(), paths)
     }
 
-    // TODO: Store some writer in the context.
+    pub fn set_diagnostics_writer<T>(&self, writer: T)
+    where
+        T: std::io::Write + 'static,
+    {
+        *self.writer.borrow_mut() = Box::new(writer);
+    }
+
     pub(crate) fn log_diagnostics(&self, diagnostics: Option<com::ISlangBlob>) {
         let Some(diagnostics) = diagnostics else {
             return;
@@ -51,12 +60,20 @@ impl SlangContext {
                 diagnostics.getBufferSize(),
             )
         };
-        let Ok(s) = std::str::from_utf8(data) else {
-            log::error!("failed to parse diagnostics");
-            return;
-        };
 
-        eprintln!("{s}");
+        let mut writer = self.writer.borrow_mut();
+
+        #[allow(unused)]
+        if let Err(e) = writer.write_all(data) {
+            #[cfg(feature = "log")]
+            log::error!("failed to write diagnostics: {e:?}");
+        }
+
+        #[allow(unused)]
+        if let Err(e) = writer.flush() {
+            #[cfg(feature = "log")]
+            log::error!("failed to flush diagnostics: {e:?}");
+        }
     }
 }
 

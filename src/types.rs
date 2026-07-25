@@ -5,6 +5,7 @@ macro_rules! define_enum {
         $($variant:ident = $native:ident),*$(,)?
     }) => {
         #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+        #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
         pub enum $name {
             $($variant,)*
         }
@@ -60,6 +61,7 @@ define_enum!(TypeKind : sys::SlangTypeKind, {
 // === Diagnostic Color ===
 
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum DiagnosticColor {
     #[default]
     Auto,
@@ -81,6 +83,7 @@ impl From<DiagnosticColor> for sys::SlangDiagnosticColor {
 // === Optimization Level ===
 
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum OptimizationLevel {
     None,
     #[default]
@@ -104,6 +107,7 @@ impl From<OptimizationLevel> for sys::SlangOptimizationLevel {
 // === Line Directive Mode ===
 
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum LineDirectiveMode {
     #[default]
     Default,
@@ -133,6 +137,7 @@ impl From<LineDirectiveMode> for sys::SlangLineDirectiveMode {
 // === Debug Info Level ===
 
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum DebugInfoLevel {
     None,
     Minimal,
@@ -156,6 +161,7 @@ impl From<DebugInfoLevel> for sys::SlangDebugInfoLevel {
 // === FP Mode ===
 
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum FloatingPointMode {
     #[default]
     Default,
@@ -177,6 +183,7 @@ impl From<FloatingPointMode> for sys::SlangFloatingPointMode {
 // === Matrix Mode ===
 
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum MatrixLayoutMode {
     #[default]
     RowMajor,
@@ -196,6 +203,7 @@ impl From<MatrixLayoutMode> for sys::SlangMatrixLayoutMode {
 // === Target Stuff ===
 
 #[derive(Debug, Clone, Copy)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum CompileTarget {
     GLSL,
     HLSL,
@@ -219,6 +227,7 @@ impl From<CompileTarget> for sys::SlangCompileTarget {
 }
 
 #[derive(Debug, Clone, Copy)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum PassThrough {
     DXC,
     Glslang,
@@ -245,6 +254,7 @@ pub struct CapabilityID(pub(crate) u32);
 // === Language ===
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum SourceLanguage {
     Slang,
     HLSL,

@@ -28,10 +28,13 @@ fn main() -> Result<()> {
 
 fn compile_shader(config: Config) -> Result<()> {
     let ctx = SlangContext::new(&config.slang_path)?;
-    let global_session = ctx.create_global_session(CompilerPaths {
-        dxil: Some(config.dxil_path),
-        dxcompiler: Some(config.dxcompiler_path),
-    })?;
+    ctx.set_diagnostics_writer(std::io::stdout());
+
+    let global_session = ctx.create_global_session(
+        CompilerPaths::new()
+            .dxil(config.dxil_path)
+            .dxcompiler(config.dxcompiler_path),
+    )?;
     println!("slang version: {}", global_session.get_build_tag());
 
     global_session.check_compile_target_support(CompileTarget::DXIL)?;
